@@ -20,5 +20,15 @@ int main(int argc, char const *argv[])
 	printf("SERVER PORT: %d\n",server_port);
 
 
+	init();
+
+
 	return 0;
+}
+
+void init()
+{
+	printf("Starting Http Server...\n");
+	
+
 }
