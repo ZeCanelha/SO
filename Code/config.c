@@ -20,7 +20,7 @@ int read_configs()
 	if ( fp == NULL )
 	{
 		fprintf(stderr, "Error: could not open config file\n");
-		return 1;
+		return 0;
 	}
 
 	while(fgets(line,LINE_SIZE,fp))
@@ -29,7 +29,7 @@ int read_configs()
 
 	}
 	fclose(fp);
-	return 0;
+	return 1;
 }
 
 void parse( char * line)
