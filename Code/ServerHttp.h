@@ -3,6 +3,7 @@
 
 
 #include "config.h"
+#include "statistics.h"
 
 #include <stdio.h>
 #include <sys/types.h> 
@@ -32,19 +33,6 @@
 #define SIZE_BUF	1024
 
 
-typedef struct stats
-{
-	int static_total_requests;
-	int cp_totalrequests;
-	float static_request_medtime;
-	float cp_request_medtime;
-	int request_type;
-	char * html_file;
-	char * request_time;
-	char * request_end_time; 
-} stat_node;
-typedef stat_node * stats_ptr;
-
 typedef struct clean_p
 {
 	int shm;
@@ -65,8 +53,6 @@ stats_ptr statistics;
 clean_ptr clean;
 
 // Global Variables Declaration
-
-int shmid;
 
 char buf[SIZE_BUF];
 char req_buf[SIZE_BUF];

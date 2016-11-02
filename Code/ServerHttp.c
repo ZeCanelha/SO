@@ -56,6 +56,10 @@ void init()
 
 	ppid = getpid();
 	printf("Main process PID: %ld\n", (long)ppid);
+
+	// Create configuration process to comunicate
+	
+
 	/*	
 	statistics_pid = fork();
 	if ( statistics_pid == 0 )
