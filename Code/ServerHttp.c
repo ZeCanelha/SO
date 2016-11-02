@@ -100,7 +100,11 @@ void http_main_listener()
 		identify(new_conn);
 
 		// Process request
-		get_request(new_conn);
+		if (get_request(new_conn) == -1)
+		{
+			close(new_conn);
+			continue;
+		}
 
 		// Verify if request is for a page or script
 		if(!strncmp(req_buf,CGI_EXPR,strlen(CGI_EXPR)))
@@ -117,7 +121,7 @@ void http_main_listener()
 }
 
 // Processes request from client
-void get_request(int socket)
+int get_request(int socket)
 {
 	int i,j;
 	int found_get;
@@ -135,7 +139,7 @@ void get_request(int socket)
 		}
 	}	
 
-	// Currently only supserver_ports GET 
+	// Currently only suports GET 
 	if(!found_get) {
 		printf("Request from client without a GET\n");
 		exit(1);
@@ -144,11 +148,16 @@ void get_request(int socket)
 	if(!strlen(req_buf))
 		sprintf(req_buf,"index.html");
 
+	if(!strcmp(req_buf, "favicon.ico")){
+		printf("FAVICON REQUEST.\n");
+		return -1;
+	}
+
 	#if DEBUG
 	printf("get_request: client requested the following page: %s\n",req_buf);
 	#endif
 
-	return;
+	return 1;
 }
 
 

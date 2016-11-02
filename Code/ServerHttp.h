@@ -79,7 +79,7 @@ void http_main_listener();
 void init();
 int  fireup(int port);
 void identify(int socket);
-void get_request(int socket);
+int get_request(int socket);
 int  read_line(int socket, int n);
 void send_header(int socket);
 void send_page(int socket);
