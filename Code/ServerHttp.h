@@ -87,6 +87,7 @@ void execute_script(int socket);
 void not_found(int socket);
 void catch_ctrlc(int);
 void cannot_execute(int socket);
+void catch_pipe(int sig);
 
 
 
