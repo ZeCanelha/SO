@@ -1,0 +1,24 @@
+
+------ Message Queues --------
+key        msqid      owner      perms      used-bytes   messages    
+
+------ Shared Memory Segments --------
+key        shmid      owner      perms      bytes      nattch     status      
+0x00000000 491520     jose       600        524288     2          dest         
+0x00000000 655361     jose       600        16777216   2                       
+0x00000000 851970     jose       600        524288     2          dest         
+0x00000000 15302659   jose       700        48         0                       
+0x00000000 17137668   jose       600        2097152    2          dest         
+0x00000000 5472261    jose       600        4194304    2          dest         
+0x00000000 17235974   jose       600        393216     2          dest         
+0x00000000 16613383   jose       600        393216     2          dest         
+0x00000000 16744456   jose       600        33554432   2          dest         
+0x00000000 14352393   jose       700        48         0                       
+0x00000000 16908298   jose       600        524288     2          dest         
+0x00000000 16023564   jose       700        48         0                       
+0x00000000 17039373   jose       700        48         0                       
+0x00000000 17072142   jose       700        48         0                       
+
+------ Semaphore Arrays --------
+key        semid      owner      perms      nsems     
+

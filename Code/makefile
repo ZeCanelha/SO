@@ -13,7 +13,7 @@ default:	main
 	$(CC) $(CFLAGS) -c $< -o $@
 
 main: $(OBJECTS)
-	$(CC) $(OBJECTS) -pthread -o $@
+	$(CC) $(OBJECTS)  -o $@ -D_REENTRANT -lpthread
 
 clean:
 	-rm -f $(OBJECTS)
