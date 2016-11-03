@@ -51,6 +51,7 @@ pid_t ppid;
 
 clean_ptr clean;
 
+
 // Global Variables Declaration
 
 char buf[SIZE_BUF];
