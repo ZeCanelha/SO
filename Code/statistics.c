@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <stdlib.h>
@@ -22,9 +23,12 @@
 
 void stats()
 {
+	int teste = 100;		
 	signal(SIGUSR1,write_screen);
 	signal(SIGUSR2,reset_info);
-
+	sleep(5);
+	statistics_pid = getpid();
+	printf("Statiscs PID: %ld\n", (long)statistics_pid);
 	// File descriptor; To be verified;
 	int fd;	
 	void *pmap;
@@ -35,6 +39,14 @@ void stats()
 	if ( fd == -1 )
 	{
 		perror("Error creating the file.");
+	}
+	printf("Gestor de Estatisticas iniciado.\n");
+	printf("Não faço nada...\n");
+	int i = 0;
+
+	while(1)
+	{
+		
 	}
 	/*
 	if ( fstat(fd,statistics) < 0)

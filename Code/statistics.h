@@ -3,6 +3,9 @@
 
 #define LOGFILE "server.log"
 
+#include <sys/types.h> 
+
+
 // Statistics will be on shared memory
 
 typedef struct stats
@@ -22,6 +25,7 @@ typedef stat_node * stats_ptr;
 // Pointer to struct
 
 stats_ptr statistics;
+pid_t statistics_pid;
 
 int shmid;
 

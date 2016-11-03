@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <pthread.h>
 #include <sys/shm.h>
 
 
@@ -42,8 +43,6 @@ typedef struct clean_p
 typedef clean_no * clean_ptr;
 
 // pid
-
-pid_t statistics_pid;
 pid_t config_pid;
 pid_t ppid;
 
@@ -78,6 +77,7 @@ void catch_pipe(int sig);
 
 
 int create_shared_memory();
+void * process_request();
 void clean_up();
 
 

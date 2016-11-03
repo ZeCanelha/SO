@@ -2,7 +2,7 @@
 # Complier
 CC	=	gcc
 # Flags used ( to be completed along )
-CFLAGS	=	-Wall	-g
+CFLAGS	=	-Wall		-g 
 
 HEADERS = config.h	ServerHttp.h statistics.h
 OBJECTS = config.o	ServerHttp.o functions.o statistics.c
@@ -13,7 +13,7 @@ default:	main
 	$(CC) $(CFLAGS) -c $< -o $@
 
 main: $(OBJECTS)
-	$(CC) $(OBJECTS) -o $@
+	$(CC) $(OBJECTS) -pthread -o $@
 
 clean:
 	-rm -f $(OBJECTS)

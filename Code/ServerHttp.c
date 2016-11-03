@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 #include "ServerHttp.h"
 
 
@@ -54,32 +55,30 @@ void init()
 	clean->shm = 1;
 
     
-    int i, thrd;
-    pthread_t threads [num_threads];
     
-    for(i =0 , i<num_threads;i++)
+    pthread_t threads [max_threads];
+    for ( int i = 0; i < max_threads; i++ )
     {
-        printf("Thread %ld\n", t);
-        thrd = pthread_create(&threads[i], NULL, DoSomeStuff, (void *)t);
-        if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
+    	if (pthread_create(&threads[i], NULL, process_request, NULL)) 
+    	{
+			perror("Error creating thread pool");
+			clean_up();
+		}
     }
-    
-    printf("PoolThread Created \n");
+ 	
 	ppid = getpid();
 	printf("Main process PID: %ld\n", (long)ppid);
 
 	// Create configuration process to comunicate
 	
 
-	/*
+	
 	statistics_pid = fork();
 	if ( statistics_pid == 0 )
 	{
-		printf("Statistics PID: %ld\n", (long)statistics_pid);
+		stats();
 	}
+	/*
 	else if ( statistics_pid == -1)
 	{
 		printf("Erro: Could not create Statistics Process!\n");
@@ -95,14 +94,11 @@ void init()
 		printf("Erro: Could not create Config process!\n");
 		clean_up();
 	}*/
-	return;
+	//return;
 }
 
 void http_main_listener()
-{
-
-	
-	
+{	
 	struct sockaddr_in client_name;
 	socklen_t client_name_len = sizeof(client_name);
 
@@ -410,9 +406,9 @@ void clean_up(int sig)
 		close(socket_conn);
 	}
 
-	//kill(statistics_pid,SIGKILL);
+	kill(statistics_pid,SIGKILL);
 	printf("Statistics process terminated.");
 
 	exit(0);
-	
+
 }
