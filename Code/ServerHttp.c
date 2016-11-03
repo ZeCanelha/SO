@@ -71,19 +71,18 @@ void init()
 
 	// Create configuration process to comunicate
 	
-
 	
-	statistics_pid = fork();
-	if ( statistics_pid == 0 )
+	if ( fork() == 0 )
 	{
 		stats();
 	}
-	/*
+	
 	else if ( statistics_pid == -1)
 	{
 		printf("Erro: Could not create Statistics Process!\n");
 		clean_up();
 	}
+	/*
 	config_pid = fork();
 	if ( config_pid == 0)
 	{
@@ -401,13 +400,15 @@ void clean_up(int sig)
 		}
 	}
 	printf("Closing socket..\n");
+	
+	printf("Socket closed...");
+	printf("Statistics process terminated.");
+	kill(statistics_pid,SIGKILL);
+	
 	if ( clean->socket == 1)
 	{
 		close(socket_conn);
 	}
-
-	kill(statistics_pid,SIGKILL);
-	printf("Statistics process terminated.");
 
 	exit(0);
 
