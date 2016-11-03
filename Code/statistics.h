@@ -1,13 +1,9 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-#define FILENAME "server.log"
+#define LOGFILE "server.log"
 
 // Statistics will be on shared memory
-
-// File pointer
-FILE *fp;
-
 
 typedef struct stats
 {
@@ -23,8 +19,14 @@ typedef struct stats
 } stat_node;
 typedef stat_node * stats_ptr;
 
+// Pointer to struct
+
+stats_ptr statistics;
+
 int shmid;
 
 void stats();
 void update_stats();
+void write_screen();
+void reset_info();
 #endif 

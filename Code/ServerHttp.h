@@ -44,12 +44,12 @@ typedef clean_no * clean_ptr;
 // pid
 
 pid_t statistics_pid;
+pid_t config_pid;
 pid_t ppid;
 
 
 // Pointers
 
-stats_ptr statistics;
 clean_ptr clean;
 
 // Global Variables Declaration

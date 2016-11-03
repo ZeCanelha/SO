@@ -19,37 +19,42 @@
 
 // TODO: Handling with the siguser;
 
+
 void stats()
 {
 	signal(SIGUSR1,write_screen);
 	signal(SIGUSR2,reset_info);
 
-	size_t sz;
+	// File descriptor; To be verified;
+	int fd;	
+	void *pmap;
+	statistics = ( stats_ptr ) malloc (sizeof(stat_node));
 	// Open file 
-	fp = fopen(FILENAME,"a");
-	if ( fp == NULL )
+	fd = open(LOGFILE , O_CREAT | O_RDWR );
+
+	if ( fd == -1 )
 	{
-		// Create file if not created
-		fp = fopen(FILENAME,"a+");
+		perror("Error creating the file.");
 	}
+	/*
+	if ( fstat(fd,statistics) < 0)
+	{
+		perror("fstat");
+		close(fd);
+		exit(0);
+	} 
 
 	// Write data to file
 	// TODO: Update while running
-	fprintf(fp,"Tipo de pedido: %d, %s,Hora Recepcao: %s,Hora de termino: %s", stats_ptr->request_type, stats_ptr->html_file,stats_ptr->request_time,stats_ptr->request_end_time);
-	
-	//TODO: mmap ??;
-	fseek(fp, 0L, SEEK_END);
-	sz = ftell(fp);
+	// Mutex ( Critical )
 
-	void *addr = mmap(0, sz, PROT_READ | PROT_WRITE, MAP_SHARED, fp, 0);
+	pmap = mmap(0, statistics.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	*/
 
-	fp(rewind);
-	fclose(fp);
-	// Unmap when closing;			
-
+	// Todo: Write data to file while runnig;
+	// unmap when finish;
 }
 
-void write_screen()
-{
-	
-}
+void write_screen(){}
+void reset_info(){}
+

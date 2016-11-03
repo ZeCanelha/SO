@@ -9,7 +9,7 @@
  * -- simplehttpd.c --
  * A (very) simple HTTP server
  *
- * Sistemas Operativos 2014/2015
+ * Sistemas Operativos 2016/2017
  * 
  * Configs into shared mem ?
  */
@@ -60,7 +60,7 @@ void init()
 	// Create configuration process to comunicate
 	
 
-	/*	
+	/*
 	statistics_pid = fork();
 	if ( statistics_pid == 0 )
 	{
@@ -69,6 +69,16 @@ void init()
 	else if ( statistics_pid == -1)
 	{
 		printf("Erro: Could not create Statistics Process!\n");
+		clean_up();
+	}
+	config_pid = fork();
+	if ( config_pid == 0)
+	{
+		printf("Config PID: %ld\n", (long) config_pid);
+	}
+	else if ( config_pid == -1 )
+	{
+		printf("Erro: Could not create Config process!\n");
 		clean_up();
 	}*/
 	return;

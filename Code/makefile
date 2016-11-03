@@ -4,8 +4,8 @@ CC	=	gcc
 # Flags used ( to be completed along )
 CFLAGS	=	-Wall	-g
 
-HEADERS = config.h	ServerHttp.h
-OBJECTS = config.o	ServerHttp.o functions.o
+HEADERS = config.h	ServerHttp.h statistics.h
+OBJECTS = config.o	ServerHttp.o functions.o statistics.c
 
 default:	main
 
