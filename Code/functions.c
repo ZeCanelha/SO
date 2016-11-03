@@ -18,3 +18,19 @@ int create_shared_memory()
 
 }
 
+void create_pool_threads(int num_threads)
+{
+    int i, thrd;
+    pthread_t threads [num_threads];
+    
+    for(i =0 , i<num_threads;i++)
+    {
+        printf("Thread %ld\n", t);
+        thrd = pthread_create(&threads[i], NULL, DoSomeStuff, (void *)t);
+        if (rc){
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
+    printf("PoolThread Created \n");
+}
