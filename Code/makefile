@@ -13,7 +13,11 @@ default:	main
 	$(CC) $(CFLAGS) -c $< -o $@
 
 main: $(OBJECTS)
+<<<<<<< HEAD
 	$(CC) $(OBJECTS)  -o $@ -D_REENTRANT -lpthread
+=======
+	$(CC) $(OBJECTS) -lpthread -D_REENTRANT -o $@
+>>>>>>> config_struct
 
 clean:
 	-rm -f $(OBJECTS)

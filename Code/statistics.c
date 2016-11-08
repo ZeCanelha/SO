@@ -26,7 +26,7 @@ void stats()
 	int teste = 100;		
 	signal(SIGUSR1,write_screen);
 	signal(SIGUSR2,reset_info);
-	sleep(5);
+	sleep(1);
 	statistics_pid = getpid();
 	printf("Statiscs PID: %ld\n", (long)statistics_pid);
 	// File descriptor; To be verified;
@@ -42,12 +42,7 @@ void stats()
 	}
 	printf("Gestor de Estatisticas iniciado.\n");
 	printf("Não faço nada...\n");
-	int i = 0;
-
-	while(1)
-	{
-		
-	}
+	
 	/*
 	if ( fstat(fd,statistics) < 0)
 	{
@@ -62,6 +57,8 @@ void stats()
 
 	pmap = mmap(0, statistics.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	*/
+	
+	sleep(360);
 
 	// Todo: Write data to file while runnig;
 	// unmap when finish;

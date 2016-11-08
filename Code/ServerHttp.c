@@ -40,10 +40,10 @@ void init()
 	if (read_configs())
 	{
 		printf("Current configurations: \n");
-		printf("SERVERPORT: %d\n", server_port);
-		printf("THREADPOOL: %d\n", max_threads);
-		printf("SCHEDULING: %s\n", scheduling);
-		printf("ALLOWED: %s\n", allowed);
+		printf("SERVERPORT: %d\n", configuracoes->server_port);
+		printf("THREADPOOL: %d\n", configuracoes->max_threads);
+		printf("SCHEDULING: %s\n", configuracoes->scheduling);
+		printf("ALLOWED: %s\n", configuracoes->allowed);
 	}
 	else exit(0);
 
@@ -71,19 +71,18 @@ void init()
 
 	// Create configuration process to comunicate
 	
-
 	
-	statistics_pid = fork();
-	if ( statistics_pid == 0 )
+	if ( fork() == 0 )
 	{
 		stats();
 	}
-	/*
+	
 	else if ( statistics_pid == -1)
 	{
 		printf("Erro: Could not create Statistics Process!\n");
 		clean_up();
 	}
+	/*
 	config_pid = fork();
 	if ( config_pid == 0)
 	{
@@ -104,10 +103,10 @@ void http_main_listener()
 
 	signal(SIGINT,clean_up);
 
-	printf("Listening for HTTP requests on server_port %d\n",server_port);
+	printf("Listening for HTTP requests on server_port %d\n",configuracoes->server_port);
 
 	// Configure listening server_port
-	if ((socket_conn=fireup(server_port))==-1)
+	if ((socket_conn=fireup(configuracoes->server_port))==-1)
 		exit(1);
 	clean ->socket = 1;
 
@@ -255,7 +254,7 @@ void identify(int socket)
 	char ipstr[INET6_ADDRSTRLEN];
 	socklen_t len;
 	struct sockaddr_in *s;
-	int server_port;
+	//int server_port;
 	struct sockaddr_storage addr;
 
 	len = sizeof addr;
@@ -263,10 +262,10 @@ void identify(int socket)
 
 	// Assuming only IPv4
 	s = (struct sockaddr_in *)&addr;
-	server_port = ntohs(s->sin_port);
+	configuracoes->server_port = ntohs(s->sin_port);
 	inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof ipstr);
 
-	printf("identify: received new request from %s server_port %d\n",ipstr,server_port);
+	printf("identify: received new request from %s server_port %d\n",ipstr,configuracoes->server_port);
 
 	return;
 }
@@ -327,7 +326,7 @@ int fireup(int port)
 
 	// Binds new socket to listening port 
  	name.sin_family = AF_INET;
- 	name.sin_port = htons(server_port);
+ 	name.sin_port = htons(configuracoes->server_port);
  	name.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (bind(new_sock, (struct sockaddr *)&name, sizeof(name)) < 0) {
 		printf("Error binding to socket\n");
@@ -401,13 +400,15 @@ void clean_up(int sig)
 		}
 	}
 	printf("Closing socket..\n");
+	
+	printf("Socket closed...");
+	printf("Statistics process terminated.");
+	kill(statistics_pid,SIGKILL);
+	
 	if ( clean->socket == 1)
 	{
 		close(socket_conn);
 	}
-
-	kill(statistics_pid,SIGKILL);
-	printf("Statistics process terminated.");
 
 	exit(0);
 

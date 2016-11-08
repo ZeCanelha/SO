@@ -13,6 +13,8 @@ void parse(char *);
 int read_configs()
 {
 	
+	configuracoes = ( config_ptr  ) malloc (sizeof(config_node));
+
 	char line[LINE_SIZE];
 
 	fp = fopen(FILENAME, "r");
@@ -44,22 +46,22 @@ void parse( char * line)
 	if ( strcmp(temp,"SERVERPORT") == 0)
 	{
 		temp = strtok(NULL,"\n");
-		server_port = (int)atoi(temp);
+		configuracoes->server_port = (int)atoi(temp);
 	}
 
 	if ( strcmp(temp,"SCHEDULING") == 0)
 	{
 		temp = strtok(NULL,"\n");
-		strcpy(scheduling,temp);
+		strcpy(configuracoes->scheduling,temp);
 	}
 	if ( strcmp(temp,"THREADPOOL") == 0)
 	{
 		temp = strtok(NULL,"\n");
-		max_threads = (int) atoi(temp);
+		configuracoes->max_threads = (int)atoi(temp);
 	}
 	if ( strcmp(temp,"ALLOWED") == 0)
 	{
 		temp = strtok(NULL,",\n");
-		strcpy(allowed,temp);
+		strcpy(configuracoes->allowed,temp);
 	}
 }
