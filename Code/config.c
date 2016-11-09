@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 
 FILE *fp;
@@ -18,63 +19,6 @@ int main(int argc, char const *argv[])
 	
 	pipe_comunication();
 }
-
-int read_configs()
-{
-	
-	configuracoes = ( config_ptr  ) malloc (sizeof(config_node));
-
-	char line[LINE_SIZE];
-
-	fp = fopen(FILENAME, "r");
-
-	if ( fp == NULL )
-	{
-		fprintf(stderr, "Error: could not open config file\n");
-		return 0;
-	}
-
-	while(fgets(line,LINE_SIZE,fp))
-	{
-		parse(line);
-
-	}
-	fclose(fp);
-	return 1;
-}
-
-void parse( char * line)
-{
-	char *temp =(char*)malloc(LINE_SIZE * sizeof(char));
-	char *line_temp = (char*)malloc(LINE_SIZE * sizeof(char));
-	strcpy(line_temp,line);
-
-
-	temp = strtok(line_temp, "=");
-
-	if ( strcmp(temp,"SERVERPORT") == 0)
-	{
-		temp = strtok(NULL,"\n");
-		configuracoes->server_port = (int)atoi(temp);
-	}
-
-	if ( strcmp(temp,"SCHEDULING") == 0)
-	{
-		temp = strtok(NULL,"\n");
-		strcpy(configuracoes->scheduling,temp);
-	}
-	if ( strcmp(temp,"THREADPOOL") == 0)
-	{
-		temp = strtok(NULL,"\n");
-		configuracoes->max_threads = (int)atoi(temp);
-	}
-	if ( strcmp(temp,"ALLOWED") == 0)
-	{
-		temp = strtok(NULL,",\n");
-		strcpy(configuracoes->allowed,temp);
-	}
-}
-
 
 /* Update configurations through named pipe */
 /* Wait for threads to finish if we need to change the threadpool */
@@ -90,6 +34,7 @@ void pipe_comunication()
 	printf("Gestor de configurações.. \n");
 	while(1)
 	{
+		fflush(stdin);
 		printf("Press enter to continue\n");
 		c = getchar();
 		if ( c == '\n')
@@ -121,7 +66,7 @@ void pipe_comunication()
 			}while(flag == 0);
 			flag = 0;
 
-			printf("\nNumero de threads: ");
+			printf("\nNumero de threads ( 0 para manter ): ");
 			scanf("%d",&threadpool);
 
 			update_values(scheduling,allowed,threadpool);
@@ -134,16 +79,57 @@ void update_values(char * scheduling , char * allowed , int threadpool )
 {
 
 	int named_pipe;
-	/* Creating name pipe for comunications */
+	char * new_schedul = ( char *) malloc (sizeof(scheduling) * sizeof(char));
+	char * new_allowed = ( char *) malloc (sizeof(allowed) * sizeof(char));
 
-	if ( mkfifo(NAMED_PIPE,O_WRONLY) != -1 )
-	{
-		printf("Named pipe criado\n");
-	}
-
-	/* Criar a comunicaçao com o server */ 
+	configuracoes = ( config_ptr  ) malloc (sizeof(config_node));
+	
+	/* Criar a comunicaçao com o processo principal */ 
 	/* Escrever no pipe */
 	/* Ter em atenção as threads em execução */
 	/* Criar um semafore q abre qd as execuções terminam */
 
+
+	strcpy(new_schedul,scheduling);
+	new_schedul[strlen(scheduling) - 1] = 0;
+	strcpy(new_allowed,allowed);
+	new_allowed[strlen(new_allowed) - 1] = 0;
+
+
+	if ( strcmp(new_schedul,"defaul") < 0 || strcmp(new_schedul,"default") > 0)
+	{
+		strcpy(configuracoes->scheduling,new_schedul);
+		printf("%s\n",configuracoes->scheduling);
+	}
+
+	if ( strcmp(new_allowed,"default") < 0 || strcmp(new_allowed,"defaul") > 0)
+	{
+		strcpy(configuracoes->allowed, new_allowed);
+		printf("%s\n", configuracoes->allowed);
+	}
+
+	if ( configuracoes->max_threads != threadpool )
+	{
+		/*TODO: mutex */
+	}
+
+	/* Open named_pipe for comunications */
+
+	if ( (named_pipe = open("configs_pipe",O_WRONLY)) != -1 )
+	{
+		printf("Named Pipe opened for comunications.\n");
+	}
+	else
+	{
+		printf("Error opening named pipe.\n");
+	}
+
+	if ( write(named_pipe,configuracoes,sizeof(config_node)) != -1 )
+	{
+		printf("Writed to pipe..\n");
+	}
+	else
+	{
+		printf("Error writting pipe--\n");
+	}
 }

@@ -37,6 +37,8 @@ void init()
 	clean->thread = 0;
 	clean->socket = 0;
 
+	/* Reading default configs */ 
+
 	if (read_configs())
 	{
 		printf("Current configurations: \n");
@@ -47,31 +49,9 @@ void init()
 	}
 	else exit(0);
 
-	if (create_shared_memory())
-	{
-		printf("Shared memory created!\n");
-	}
-	else clean_up();
-	clean->shm = 1;
+	/* Creating child process' */
 
-    
-    
-    pthread_t threads [max_threads];
-    for ( int i = 0; i < max_threads; i++ )
-    {
-    	if (pthread_create(&threads[i], NULL, process_request, NULL)) 
-    	{
-			perror("Error creating thread pool");
-			clean_up();
-		}
-    }
- 	
-	ppid = getpid();
-	printf("Main process PID: %ld\n", (long)ppid);
 
-	// Create configuration process to comunicate
-	
-	
 	if ( fork() == 0 )
 	{
 		stats();
@@ -82,6 +62,44 @@ void init()
 		printf("Erro: Could not create Statistics Process!\n");
 		clean_up();
 	}
+
+	/* Creating shared memory */
+
+	if (create_shared_memory())
+	{
+		printf("Shared memory created!\n");
+	}
+	else clean_up();
+	clean->shm = 1;
+
+	if ( (named_pipe = mkfifo(NAMED_PIPE,0666)) != -1 )
+	{
+		printf("Named pipe created for comunications\n");
+	}
+	else
+	{
+		printf("Error creating named pipe\n");
+	}
+
+	clean->pipe = 1;
+
+    /* Creating threadpool */
+    
+    pthread_t threads [configuracoes->max_threads];
+    for ( int i = 0; i < configuracoes->max_threads; i++ )
+    {
+    	if (pthread_create(&threads[i], NULL, process_request, NULL)) 
+    	{
+			perror("Error creating thread pool");
+			clean_up();
+		}
+    }
+ 	
+	
+
+	// Create configuration process to comunicate
+	
+
 	/*
 	config_pid = fork();
 	if ( config_pid == 0)

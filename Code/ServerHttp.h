@@ -1,8 +1,6 @@
 #ifndef SERVERHTTP_H
 #define SERVERHTTP_H
 
-
-#include "config.h"
 #include "statistics.h"
 
 #include <stdio.h>
@@ -23,6 +21,9 @@
 
 // Produce debug information
 #define DEBUG	  	1	
+#define NAMED_PIPE "configs_pipe"
+#define FILENAME "..//configs/configs.txt"
+#define LINE_SIZE 50
 
 // Header of HTTP reply to client 
 #define	SERVER_STRING 	"Server: simpleserver/0.1.0\r\n"
@@ -39,8 +40,18 @@ typedef struct clean_p
 	int shm;
 	int thread;
 	int socket;
+	int pipe;
 }clean_no;
 typedef clean_no * clean_ptr;
+
+typedef struct config
+{
+	int server_port;
+	int max_threads;
+	char scheduling[15];
+	char allowed[15];
+}config_node;
+typedef config_node * config_ptr;
 
 // pid
 pid_t config_pid;
@@ -50,6 +61,8 @@ pid_t ppid;
 // Pointers
 
 clean_ptr clean;
+config_ptr configuracoes;
+
 
 
 // Global Variables Declaration
@@ -58,9 +71,12 @@ char buf[SIZE_BUF];
 char req_buf[SIZE_BUF];
 char buf_tmp[SIZE_BUF];
 int socket_conn,new_conn;
+int named_pipe;
 
 
 
+int read_configs();
+void parse( char * );
 void http_main_listener();
 void init();
 int  fireup(int port);
