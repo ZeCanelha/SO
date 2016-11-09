@@ -22,8 +22,7 @@
 
 
 void stats()
-{
-	int teste = 100;		
+{	
 	signal(SIGUSR1,write_screen);
 	signal(SIGUSR2,reset_info);
 	sleep(1);

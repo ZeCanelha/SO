@@ -3,7 +3,7 @@
 
 #define FILENAME "..//configs/configs.txt"
 #define LINE_SIZE 50
-
+#define NAMED_PIPE 
 #include <sys/types.h>
 /* Global Variavels */
 
@@ -28,5 +28,7 @@ char allowed[15];
 
 int read_configs();
 void parse(char *);
+void pipe_comunication();
+void update_values(char * , char * , int );
 
 #endif
