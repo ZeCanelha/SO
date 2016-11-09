@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "config.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 
 FILE *fp;
@@ -110,7 +113,7 @@ void pipe_comunication()
 				printf("\n - Permissoes: (gz/zip/default): ");
 				fgets(allowed,15,stdin);
 				
-				if ( (strcmp(scheduling,"gz\n")==0) || (strcmp(scheduling,"zip\n")==0) || (strcmp(scheduling,"default\n")==0) )
+				if ( (strcmp(allowed,"gz\n")==0) || (strcmp(allowed,"zip\n")==0) || (strcmp(allowed,"default\n")==0) )
 				{
 					printf("Alterado!\n");
 					flag = 1;
@@ -129,5 +132,18 @@ void pipe_comunication()
 
 void update_values(char * scheduling , char * allowed , int threadpool )
 {
-	
+
+	int named_pipe;
+	/* Creating name pipe for comunications */
+
+	if ( mkfifo(NAMED_PIPE,O_WRONLY) != -1 )
+	{
+		printf("Named pipe criado\n");
+	}
+
+	/* Criar a comunicaçao com o server */ 
+	/* Escrever no pipe */
+	/* Ter em atenção as threads em execução */
+	/* Criar um semafore q abre qd as execuções terminam */
+
 }

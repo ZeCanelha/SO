@@ -3,7 +3,7 @@
 
 #define FILENAME "..//configs/configs.txt"
 #define LINE_SIZE 50
-#define NAMED_PIPE 
+#define NAMED_PIPE "..//configs/pipe"
 #include <sys/types.h>
 /* Global Variavels */
 
