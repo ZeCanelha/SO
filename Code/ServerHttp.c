@@ -72,16 +72,8 @@ void init()
 	else clean_up();
 	clean->shm = 1;
 
-	if ( (named_pipe = mkfifo(NAMED_PIPE,0666)) != -1 )
-	{
-		printf("Named pipe created for comunications\n");
-	}
-	else
-	{
-		printf("Error creating named pipe\n");
-	}
-
-	clean->pipe = 1;
+	
+	
 
     /* Creating threadpool */
     

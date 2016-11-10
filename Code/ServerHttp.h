@@ -21,7 +21,6 @@
 
 // Produce debug information
 #define DEBUG	  	1	
-#define NAMED_PIPE "configs_pipe"
 #define FILENAME "..//configs/configs.txt"
 #define LINE_SIZE 50
 

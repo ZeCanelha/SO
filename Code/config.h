@@ -3,6 +3,8 @@
 
 #include <sys/types.h>
 /* Global Variavels */
+#define NAMED_PIPE "configspipe"
+
 
 typedef struct config
 {

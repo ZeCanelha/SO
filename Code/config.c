@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 
 FILE *fp;
@@ -30,6 +31,15 @@ void pipe_comunication()
 	char allowed[15];
 	int threadpool;
 	int flag = 0;
+	
+
+	if ((mkfifo(NAMED_PIPE, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST))
+  	{
+    	perror("Cannot create pie: ");
+    	exit(0);
+  	}
+  	printf("Piped created for comunications.\n");
+
 
 	printf("Gestor de configurações.. \n");
 	while(1)
@@ -72,6 +82,10 @@ void pipe_comunication()
 			update_values(scheduling,allowed,threadpool);
 		}
 	}
+
+	/* unlink named_pipe */
+	unlink(NAMED_PIPE);
+
 }
 
 
@@ -108,14 +122,19 @@ void update_values(char * scheduling , char * allowed , int threadpool )
 		printf("%s\n", configuracoes->allowed);
 	}
 
-	if ( configuracoes->max_threads != threadpool )
-	{
-		/*TODO: mutex */
-	}
 
 	/* Open named_pipe for comunications */
 
-	if ( (named_pipe = open("configs_pipe",O_WRONLY)) != -1 )
+
+
+	if ( (named_pipe = open(NAMED_PIPE,O_WRONLY)) < 0 )
+	{
+		perror("Cannot open  pipe.");
+	}
+
+	printf("Abri o pipe!\n");
+	/*
+	if ( (named_pipe = open(NAMED_PIPE,O_WRONLY)) != -1 )
 	{
 		printf("Named Pipe opened for comunications.\n");
 	}
@@ -132,4 +151,9 @@ void update_values(char * scheduling , char * allowed , int threadpool )
 	{
 		printf("Error writting pipe--\n");
 	}
+	*/
+
+	close(named_pipe);
+
+	printf("Fechei o pipe!\n");
 }
