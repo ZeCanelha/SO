@@ -15,6 +15,14 @@ typedef struct config
 }config_node;
 typedef config_node * config_ptr;
 
+
+typedef struct 
+{
+	int a;
+	int b;
+}teste;
+
+
 config_ptr configuracoes;
 pid_t config_pid;
 

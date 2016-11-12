@@ -3,6 +3,11 @@
 
 #include "statistics.h"
 
+#define NAMED_PIPE "configspipe"
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <stdio.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -52,6 +57,13 @@ typedef struct config
 }config_node;
 typedef config_node * config_ptr;
 
+
+typedef struct 
+{
+	int a;
+	int b;
+}teste;
+
 // pid
 pid_t config_pid;
 pid_t ppid;
@@ -62,6 +74,10 @@ pid_t ppid;
 clean_ptr clean;
 config_ptr configuracoes;
 
+
+// Threads
+
+pthread_mutex_t mutex;
 
 
 // Global Variables Declaration
@@ -75,6 +91,7 @@ int named_pipe;
 
 
 int read_configs();
+void create_comunication();
 void parse( char * );
 void http_main_listener();
 void init();

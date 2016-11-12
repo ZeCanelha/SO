@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-
+#include <sys/wait.h>
 
 FILE *fp;
 
@@ -32,14 +32,6 @@ void pipe_comunication()
 	int threadpool;
 	int flag = 0;
 	
-
-	if ((mkfifo(NAMED_PIPE, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST))
-  	{
-    	perror("Cannot create pie: ");
-    	exit(0);
-  	}
-  	printf("Piped created for comunications.\n");
-
 
 	printf("Gestor de configurações.. \n");
 	while(1)
@@ -116,7 +108,7 @@ void update_values(char * scheduling , char * allowed , int threadpool )
 		printf("%s\n",configuracoes->scheduling);
 	}
 
-	if ( strcmp(new_allowed,"default") < 0 || strcmp(new_allowed,"defaul") > 0)
+	if ( strcmp(new_allowed,"default") < 0 || strcmp(new_allowed,"default") > 0)
 	{
 		strcpy(configuracoes->allowed, new_allowed);
 		printf("%s\n", configuracoes->allowed);
@@ -126,32 +118,14 @@ void update_values(char * scheduling , char * allowed , int threadpool )
 	/* Open named_pipe for comunications */
 
 
-
 	if ( (named_pipe = open(NAMED_PIPE,O_WRONLY)) < 0 )
 	{
 		perror("Cannot open  pipe.");
 	}
 
-	printf("Abri o pipe!\n");
-	/*
-	if ( (named_pipe = open(NAMED_PIPE,O_WRONLY)) != -1 )
-	{
-		printf("Named Pipe opened for comunications.\n");
-	}
-	else
-	{
-		printf("Error opening named pipe.\n");
-	}
+	write(named_pipe,&configuracoes,sizeof(config_node));
 
-	if ( write(named_pipe,configuracoes,sizeof(config_node)) != -1 )
-	{
-		printf("Writed to pipe..\n");
-	}
-	else
-	{
-		printf("Error writting pipe--\n");
-	}
-	*/
+	printf("Abri o pipe!\n");
 
 	close(named_pipe);
 

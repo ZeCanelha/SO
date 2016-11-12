@@ -51,7 +51,7 @@ void init()
 
 	/* Creating child process' */
 
-
+	/*
 	if ( fork() == 0 )
 	{
 		stats();
@@ -72,7 +72,13 @@ void init()
 	else clean_up();
 	clean->shm = 1;
 
-	
+	if ((mkfifo(NAMED_PIPE, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST))
+  	{
+    	perror("Cannot create pipe: ");
+    	exit(0);
+  	}
+  	// TODO: Remove pipe 
+  	printf("Piped created for comunications.\n");
 	
 
     /* Creating threadpool */
@@ -123,6 +129,8 @@ void http_main_listener()
 	// Serve requests 
 	while (1)
 	{
+		// Abrir o pipe para comunicações
+
 		// Accept connection on socket
 		if ( (new_conn = accept(socket_conn,(struct sockaddr *)&client_name,&client_name_len)) == -1 ) {
 			printf("Error accepting connection\n");
