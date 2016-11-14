@@ -15,8 +15,6 @@
  * Configs into shared mem ?
  */
 
-
-
 int main(int argc, char ** argv)
 {
 	 
