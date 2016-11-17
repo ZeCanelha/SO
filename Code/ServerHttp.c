@@ -47,7 +47,19 @@ void init()
 	}
 	else exit(0);
 
-	/* Creating child process' */
+
+	/* Open semaphore created on config.c. To do so , 1st program to run must be config */
+
+	/* Inicializar o valor do semaforo a 0 */
+	sem_unlink("PIPE_C");
+	pipe_controller1 = sem_open("PIPE_C",O_CREAT|O_EXCL, 0700,0);
+
+	/* Creating listener for pipe */
+
+	if ( fork() == 0 )
+	{
+		pipe_listener();
+	}
 
 	/*
 	if ( fork() == 0 )
@@ -60,7 +72,7 @@ void init()
 		printf("Erro: Could not create Statistics Process!\n");
 		clean_up();
 	}
-
+	*/
 	/* Creating shared memory */
 
 	if (create_shared_memory())
@@ -69,14 +81,6 @@ void init()
 	}
 	else clean_up();
 	clean->shm = 1;
-
-	if ((mkfifo(NAMED_PIPE, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST))
-  	{
-    	perror("Cannot create pipe: ");
-    	exit(0);
-  	}
-  	// TODO: Remove pipe 
-  	printf("Piped created for comunications.\n");
 	
 
     /* Creating threadpool */
@@ -127,8 +131,6 @@ void http_main_listener()
 	// Serve requests 
 	while (1)
 	{
-		// Abrir o pipe para comunicações
-
 		// Accept connection on socket
 		if ( (new_conn = accept(socket_conn,(struct sockaddr *)&client_name,&client_name_len)) == -1 ) {
 			printf("Error accepting connection\n");
@@ -420,6 +422,7 @@ void clean_up(int sig)
 	printf("Socket closed...");
 	printf("Statistics process terminated.");
 	kill(statistics_pid,SIGKILL);
+	kill(pipe_pid,SIGKILL);
 	
 	if ( clean->socket == 1)
 	{
@@ -428,4 +431,39 @@ void clean_up(int sig)
 
 	exit(0);
 
+}
+
+
+void pipe_listener()
+{
+	/* Read configs from the named pipe */
+
+	pipe_pid = getpid();
+
+	if ((mkfifo(NAMED_PIPE, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST))
+  	{
+    	perror("Cannot create pipe: ");
+    	exit(0);
+  	}
+  	// TODO: Remove pipe 
+  	printf("Piped created for comunications.\n");
+
+  	/* Start reading */
+
+  	config_node  * new_configs = malloc(sizeof(config_node));
+	if ( (named_pipe = open(NAMED_PIPE,O_RDONLY) < 0 ))
+	{
+		printf("Error openig pipe for reading.\n");
+	}
+
+  	while(1)
+  	{
+  		printf("Waiting for pipe to comunicate..\n");
+	
+		sem_wait(pipe_controller1);
+		read(named_pipe, new_configs, sizeof(config_node));
+		printf("[SERVER] Received:\nSchedulling type:%s\nTypes Allowed: %s\nThreadpool: %d\n",new_configs->scheduling, new_configs->allowed, new_configs->max_threads);
+
+	/* TODO: Check if thread pool was modified and if so , wait the current ones to execute */
+  	}
 }

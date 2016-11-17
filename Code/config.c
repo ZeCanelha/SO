@@ -6,18 +6,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <semaphore.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/wait.h>
 
 FILE *fp;
 
-int read_configs();
-void parse(char *);
+sem_t * pipe_controller;
 
 int main(int argc, char const *argv[])
 {
-	
+	//sem_unlink("PIPE_C");
+
 	pipe_comunication();
 }
 
@@ -32,6 +33,7 @@ void pipe_comunication()
 	int threadpool;
 	int flag = 0;
 	
+
 
 	printf("Gestor de configurações.. \n");
 	while(1)
@@ -85,49 +87,56 @@ void update_values(char * scheduling , char * allowed , int threadpool )
 {
 
 	int named_pipe;
-	char * new_schedul = ( char *) malloc (sizeof(scheduling) * sizeof(char));
-	char * new_allowed = ( char *) malloc (sizeof(allowed) * sizeof(char));
+	char * new_schedul = ( char *) malloc (MAX_BUFF * sizeof(char));
+	char * new_allowed = ( char *) malloc (MAX_BUFF * sizeof(char));
 
-	configuracoes = ( config_ptr  ) malloc (sizeof(config_node));
+	//_configuracoes = ( config_ptr  ) malloc (sizeof(config_node));
 	
 	/* Criar a comunicaçao com o processo principal */ 
 	/* Escrever no pipe */
 	/* Ter em atenção as threads em execução */
 	/* Criar um semafore q abre qd as execuções terminam */
 
+	configuracoes = malloc(sizeof(config_node));
 
 	strcpy(new_schedul,scheduling);
 	new_schedul[strlen(scheduling) - 1] = 0;
 	strcpy(new_allowed,allowed);
 	new_allowed[strlen(new_allowed) - 1] = 0;
 
-
-	if ( strcmp(new_schedul,"defaul") < 0 || strcmp(new_schedul,"default") > 0)
-	{
-		strcpy(configuracoes->scheduling,new_schedul);
-		printf("%s\n",configuracoes->scheduling);
-	}
-
-	if ( strcmp(new_allowed,"default") < 0 || strcmp(new_allowed,"default") > 0)
-	{
-		strcpy(configuracoes->allowed, new_allowed);
-		printf("%s\n", configuracoes->allowed);
-	}
+	configuracoes->server_port = 7504;
+	strcpy(configuracoes->allowed, new_allowed);
+	strcpy(configuracoes->scheduling,new_schedul);
+	configuracoes->max_threads = threadpool;
 
 
-	/* Open named_pipe for comunications */
+	/* Open named_pipe and semaphore for comunications */
 
+	pipe_controller = sem_open("PIPE_C",0);
 
 	if ( (named_pipe = open(NAMED_PIPE,O_WRONLY)) < 0 )
 	{
 		perror("Cannot open  pipe.");
 	}
+	else
+	{
+		printf("Pipe opened with success!\n");
+	}
 
-	write(named_pipe,&configuracoes,sizeof(config_node));
+	if ( write(named_pipe,configuracoes,sizeof(*configuracoes)) < 0 )
+	{
+		perror("Cannot write to pipe");
+	}
+	else
+	{
+		printf("Written to pipe.\n");
+		/* Abrir o semaforo para o processo principal poder ler do pipe */
+		sem_post(pipe_controller);
+	}
+	/*
+	if ( close(named_pipe) < 0 )
+	{
+		perror("Error closing pipe.");
+	}*/
 
-	printf("Abri o pipe!\n");
-
-	close(named_pipe);
-
-	printf("Fechei o pipe!\n");
 }

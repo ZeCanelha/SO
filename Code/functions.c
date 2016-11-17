@@ -29,7 +29,7 @@ int read_configs()
 {
 	FILE *fp;
 	
-	configuracoes = ( config_ptr  ) malloc (sizeof(config_node));
+	configuracoes =(config_node *) malloc(sizeof(config_node));	
 
 	char line[LINE_SIZE];
 
@@ -82,19 +82,3 @@ void parse( char * line)
 	}
 }
 
-
-
-void create_comunication()
-{
-	/* Semaforo para leitura aqui bem como no configs.c */
-
-	config_ptr new_configs = ( config_ptr  ) malloc (sizeof(config_node));
-	if ( (named_pipe = open(NAMED_PIPE,O_RDWR) < 0 ))
-	{
-		printf("Error openig pipe for reading.\n");
-	}
-	read(named_pipe, &new_configs, sizeof(config_node));
-	printf("[SERVER] Received (%s,%s)\n",new_configs->scheduling, new_configs->allowed);
-
-	/* TODO: Check if thread pool was modified and if so , wait the current ones to execute */
-}

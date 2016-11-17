@@ -3,7 +3,6 @@
 
 #include "statistics.h"
 
-#define NAMED_PIPE "configspipe"
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -21,6 +20,7 @@
 #include <string.h>
 #include <signal.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include <sys/shm.h>
 
 
@@ -28,6 +28,7 @@
 #define DEBUG	  	1	
 #define FILENAME "..//configs/configs.txt"
 #define LINE_SIZE 50
+#define MAX_BUFF 15
 
 // Header of HTTP reply to client 
 #define	SERVER_STRING 	"Server: simpleserver/0.1.0\r\n"
@@ -39,6 +40,12 @@
 #define SIZE_BUF	1024
 
 
+/* Operations for pipe comunication */
+
+sem_t * pipe_controller1;
+#define SEM_NAME "pipe_control"
+#define NAMED_PIPE "configspipe"
+
 typedef struct clean_p
 {
 	int shm;
@@ -48,31 +55,25 @@ typedef struct clean_p
 }clean_no;
 typedef clean_no * clean_ptr;
 
-typedef struct config
+typedef struct 
 {
 	int server_port;
 	int max_threads;
-	char scheduling[15];
-	char allowed[15];
+	char scheduling[MAX_BUFF];
+	char allowed[MAX_BUFF];
 }config_node;
-typedef config_node * config_ptr;
 
 
-typedef struct 
-{
-	int a;
-	int b;
-}teste;
 
 // pid
 pid_t config_pid;
 pid_t ppid;
-
+pid_t pipe_pid;
 
 // Pointers
 
 clean_ptr clean;
-config_ptr configuracoes;
+config_node  * configuracoes;
 
 
 // Threads
@@ -91,10 +92,10 @@ int named_pipe;
 
 
 int read_configs();
-void create_comunication();
 void parse( char * );
 void http_main_listener();
 void init();
+void pipe_listener();
 int  fireup(int port);
 void identify(int socket);
 int get_request(int socket);
@@ -105,7 +106,7 @@ void execute_script(int socket);
 void not_found(int socket);
 void catch_ctrlc(int);
 void cannot_execute(int socket);
-void catch_pipe(int sig);
+
 
 
 
