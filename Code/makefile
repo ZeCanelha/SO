@@ -5,7 +5,7 @@ CC	=	gcc
 CFLAGS	=	-Wall		-g 
 
 HEADERS =	ServerHttp.h statistics.h
-OBJECTS =	ServerHttp.o functions.o statistics.c
+OBJECTS =	ServerHttp.o functions.o 
 
 default:	main
 

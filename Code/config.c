@@ -133,10 +133,10 @@ void update_values(char * scheduling , char * allowed , int threadpool )
 		/* Abrir o semaforo para o processo principal poder ler do pipe */
 		sem_post(pipe_controller);
 	}
-	/*
+	
 	if ( close(named_pipe) < 0 )
 	{
 		perror("Error closing pipe.");
-	}*/
+	}
 
 }
