@@ -438,6 +438,7 @@ void pipe_listener()
 {
 	/* Read configs from the named pipe */
 
+	int num_bytes;
 	pipe_pid = getpid();
 
 	if ((mkfifo(NAMED_PIPE, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST))
@@ -461,8 +462,10 @@ void pipe_listener()
   		printf("Waiting for pipe to comunicate..\n");
 	
 		sem_wait(pipe_controller1);
-		read(named_pipe, new_configs, sizeof(config_node));
-		printf("[SERVER] Received:\nSchedulling type:%s\nTypes Allowed: %s\nThreadpool: %d\n",new_configs->scheduling, new_configs->allowed, new_configs->max_threads);
+		if ( (num_bytes = read(named_pipe, new_configs, sizeof(*new_configs))) < 0)
+			printf("Error on reading from named pipe.");
+		fputs(new_configs->scheduling,stdout);
+		//printf("[SERVER] Received:\nSchedulling type:%s\nTypes Allowed: %s\nThreadpool: %d\n",new_configs->scheduling, new_configs->allowed, new_configs->max_threads);
 
 	/* TODO: Check if thread pool was modified and if so , wait the current ones to execute */
   	}
