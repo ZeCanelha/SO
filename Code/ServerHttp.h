@@ -64,6 +64,14 @@ typedef struct
 }config_node;
 
 
+typedef struct 
+{
+	int schedulling;
+	int allowed;
+	int max_threads;
+	
+}config;
+
 
 // pid
 pid_t config_pid;

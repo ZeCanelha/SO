@@ -14,19 +14,16 @@
 
 typedef struct 
 {
-	int server_port;
+	int schedulling;
+	int allowed;
 	int max_threads;
-	char scheduling[MAX_BUFF];
-	char allowed[MAX_BUFF];
-}config_node;
+	
+}config;
 
-
-
-config_node  * configuracoes;
 
 pid_t config_pid;
 
 void pipe_comunication();
-void update_values(char * , char * , int );
+void update_values(int ,int , int );
 
 #endif

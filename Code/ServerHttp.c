@@ -450,21 +450,21 @@ void pipe_listener()
   	printf("Piped created for comunications.\n");
 
   	/* Start reading */
-
-  	config_node  * new_configs = malloc(sizeof(config_node));
-	if ( (named_pipe = open(NAMED_PIPE,O_RDONLY) < 0 ))
+	if ( (named_pipe = open(NAMED_PIPE,O_RDWR) < 0 ))
 	{
 		printf("Error openig pipe for reading.\n");
 	}
+
+	config new_configs;
 
   	while(1)
   	{
   		printf("Waiting for pipe to comunicate..\n");
 	
-		sem_wait(pipe_controller1);
-		if ( (num_bytes = read(named_pipe, new_configs, sizeof(*new_configs))) < 0)
+		//sem_wait(pipe_controller1);
+		if ( (num_bytes = read(named_pipe, &new_configs, sizeof(config))) < 0)
 			printf("Error on reading from named pipe.");
-		fputs(new_configs->scheduling,stdout);
+		printf("Received: %d,%d, %d\n", new_configs.schedulling, new_configs.allowed , new_configs.max_threads);
 		//printf("[SERVER] Received:\nSchedulling type:%s\nTypes Allowed: %s\nThreadpool: %d\n",new_configs->scheduling, new_configs->allowed, new_configs->max_threads);
 
 	/* TODO: Check if thread pool was modified and if so , wait the current ones to execute */

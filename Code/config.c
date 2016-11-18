@@ -28,8 +28,8 @@ int main(int argc, char const *argv[])
 void pipe_comunication()
 {
 	char c;
-	char scheduling[15];
-	char allowed[15];
+	int scheduling;
+	int allowed;
 	int threadpool;
 	int flag = 0;
 	
@@ -43,34 +43,27 @@ void pipe_comunication()
 		c = getchar();
 		if ( c == '\n')
 		{
-			printf("\nAlterar definições..");
+			printf("\nAlterar definições..\n");
 
 			do
 			{
-				printf("\n - Tipo de escalonamento (static/compressed/fifo/default ): ");
-				fgets(scheduling,15,stdin);
-				
-				if ( (strcmp(scheduling,"static\n")==0) || (strcmp(scheduling,"fifo\n")==0)  || ( strcmp(scheduling,"compressed\n") == 0) || (strcmp(scheduling,"default\n")==0))
-				{
-					printf("\nAlterado!\n");
+				printf("Tipo de escalonamento:\n1.Static.\n2.Compressed\n3.FIFO\n4.Default\n");
+				scanf("%d",&scheduling);
+
+				if ( scheduling > 0 && scheduling < 5 )
 					flag = 1;
-				}
 			}while(flag == 0);
 			flag = 0;
 			do
 			{
-				printf("\n - Permissoes: (gz/zip/default): ");
-				fgets(allowed,15,stdin);
-				
-				if ( (strcmp(allowed,"gz\n")==0) || (strcmp(allowed,"zip\n")==0) || (strcmp(allowed,"default\n")==0) )
-				{
-					printf("Alterado!\n");
+				printf("Permissoes:\n1.gz\n2.zip\n3.default): ");
+				scanf("%d",&allowed);
+				if ( allowed > 0 && allowed < 4 )
 					flag = 1;
-				}
 			}while(flag == 0);
 			flag = 0;
 
-			printf("\nNumero de threads ( 0 para manter ): ");
+			printf("\nNumero de threads(0 para manter): ");
 			scanf("%d",&threadpool);
 
 			update_values(scheduling,allowed,threadpool);
@@ -83,33 +76,16 @@ void pipe_comunication()
 }
 
 
-void update_values(char * scheduling , char * allowed , int threadpool )
+void update_values(int  scheduling , int  allowed , int threadpool )
 {
 
 	int named_pipe;
-	char * new_schedul = ( char *) malloc (MAX_BUFF * sizeof(char));
-	char * new_allowed = ( char *) malloc (MAX_BUFF * sizeof(char));
 
-	//_configuracoes = ( config_ptr  ) malloc (sizeof(config_node));
-	
-	/* Criar a comunicaçao com o processo principal */ 
-	/* Escrever no pipe */
-	/* Ter em atenção as threads em execução */
-	/* Criar um semafore q abre qd as execuções terminam */
+	config new_configs;
 
-	configuracoes = malloc(sizeof(config_node));
-
-	strcpy(new_schedul,scheduling);
-	new_schedul[strlen(scheduling) - 1] = 0;
-	strcpy(new_allowed,allowed);
-	new_allowed[strlen(new_allowed) - 1] = 0;
-
-	configuracoes->server_port = 7504;
-	strcpy(configuracoes->allowed, new_allowed);
-	strcpy(configuracoes->scheduling,new_schedul);
-	configuracoes->max_threads = threadpool;
-
-
+	new_configs.schedulling = scheduling;
+	new_configs.allowed = allowed;
+	new_configs.max_threads = threadpool;
 	/* Open named_pipe and semaphore for comunications */
 
 	pipe_controller = sem_open("PIPE_C",0);
@@ -123,7 +99,7 @@ void update_values(char * scheduling , char * allowed , int threadpool )
 		printf("Pipe opened with success!\n");
 	}
 
-	if ( write(named_pipe,configuracoes,sizeof(*configuracoes)) < 0 )
+	if ( write(named_pipe,&new_configs,sizeof(config)) < 0 )
 	{
 		perror("Cannot write to pipe");
 	}
@@ -131,12 +107,12 @@ void update_values(char * scheduling , char * allowed , int threadpool )
 	{
 		printf("Written to pipe.\n");
 		/* Abrir o semaforo para o processo principal poder ler do pipe */
-		sem_post(pipe_controller);
+		//sem_post(pipe_controller);
 	}
-	
+	/*
 	if ( close(named_pipe) < 0 )
 	{
 		perror("Error closing pipe.");
-	}
+	}*/
 
 }
