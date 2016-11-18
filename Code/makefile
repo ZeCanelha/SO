@@ -1,11 +1,11 @@
-# Makefile 
+# Makefile
 # Complier
 CC	=	gcc
 # Flags used ( to be completed along )
-CFLAGS	=	-Wall		-g 
+CFLAGS	=	-Wall		-g
 
-HEADERS =	ServerHttp.h statistics.h
-OBJECTS =	ServerHttp.o functions.o statistics.o 
+HEADERS =	ServerHttp.h 
+OBJECTS =	ServerHttp.o functions.o statistics.o
 
 default:	main
 

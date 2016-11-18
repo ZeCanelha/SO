@@ -3,13 +3,13 @@
 
 int create_shared_memory()
 {
-	if((shmid = shmget(IPC_PRIVATE, sizeof(stat_node), IPC_CREAT | 0700)) == -1 )
+	if((shmid = shmget(IPC_PRIVATE, sizeof(display_stat_node), IPC_CREAT | 0700)) == -1 )
 	{
 		perror("Error creating shared memory\n");
 		return 0;
 	}
 
-	if((statistics = (stats_ptr) shmat(shmid, NULL, 0)) == ((stats_ptr) -1)) 
+	if((display_stats = (display_stat_node *)shmat(shmid, NULL, 0)) == (display_stat_node *) -1)
 	{
 		perror("Error attaching shared memory\n");
 		return 0;
@@ -28,8 +28,8 @@ void * process_request()
 int read_configs()
 {
 	FILE *fp;
-	
-	configuracoes =(config_node *) malloc(sizeof(config_node));	
+
+	configuracoes =(config_node *) malloc(sizeof(config_node));
 
 	char line[LINE_SIZE];
 
@@ -81,4 +81,3 @@ void parse( char * line)
 		strcpy(configuracoes->allowed,temp);
 	}
 }
-

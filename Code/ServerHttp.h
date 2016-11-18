@@ -1,14 +1,12 @@
 #ifndef SERVERHTTP_H
 #define SERVERHTTP_H
 
-#include "statistics.h"
-
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -25,12 +23,13 @@
 
 
 // Produce debug information
-#define DEBUG	  	1	
+#define DEBUG	  	1
 #define FILENAME "..//configs/configs.txt"
+#define LOGFILE "server.log"
 #define LINE_SIZE 50
 #define MAX_BUFF 15
 
-// Header of HTTP reply to client 
+// Header of HTTP reply to client
 #define	SERVER_STRING 	"Server: simpleserver/0.1.0\r\n"
 #define HEADER_1	"HTTP/1.0 200 OK\r\n"
 #define HEADER_2	"Content-Type: text/html\r\n\r\n"
@@ -46,16 +45,19 @@ sem_t * pipe_controller1;
 #define SEM_NAME "pipe_control"
 #define NAMED_PIPE "configspipe"
 
+/* Struct Info for cleanig */
 typedef struct clean_p
 {
 	int shm;
+	int mmap;
 	int thread;
 	int socket;
 	int pipe;
 }clean_no;
 typedef clean_no * clean_ptr;
 
-typedef struct 
+/* Configurations struct */
+typedef struct
 {
 	int server_port;
 	int max_threads;
@@ -63,25 +65,46 @@ typedef struct
 	char allowed[MAX_BUFF];
 }config_node;
 
-
-typedef struct 
+typedef struct
 {
 	int schedulling;
 	int allowed;
 	int max_threads;
-	
+
 }config;
 
+/* Statistics structs */
 
-// pid
+typedef struct
+{
+	int static_total_requests;
+	int cp_totalrequests;
+	float static_request_medtime;
+	float cp_request_medtime;
+
+	int request_type;
+	char * html_file;
+	char * request_time;
+	char * request_end_time;
+
+}display_stat_node;
+
+
+// Pointer to struct
+
+display_stat_node  * display_stats;
+
+/* Proccesses pid */
+pid_t statistics_pid;
 pid_t config_pid;
 pid_t ppid;
 pid_t pipe_pid;
 
-// Pointers
+/* Pointers */
 
 clean_ptr clean;
 config_node  * configuracoes;
+
 
 
 // Threads
@@ -96,8 +119,10 @@ char req_buf[SIZE_BUF];
 char buf_tmp[SIZE_BUF];
 int socket_conn,new_conn;
 int named_pipe;
+int shmid;
 
 
+/* ServerHttp functions */
 
 int read_configs();
 void parse( char * );
@@ -112,15 +137,18 @@ void send_header(int socket);
 void send_page(int socket);
 void execute_script(int socket);
 void not_found(int socket);
-void catch_ctrlc(int);
 void cannot_execute(int socket);
-
-
-
 
 int create_shared_memory();
 void * process_request();
 void clean_up();
+
+/* Statistics functions */
+
+void stats();
+void update_stats();
+void write_screen();
+void reset_info();
 
 
 #endif
