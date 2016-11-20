@@ -68,9 +68,8 @@ void stats()
 		exit(1);
 	}
 
-	/* Something needs to be written at the end of the file to
-     * have the file actually have the new size.
-     * Just writing an empty string at the current file position will do.
+	/* Something needs to be written to the file
+		* in order to MMAP successfully
 	*/
 	int result;
 	if ( (result = write(log_fd, "", 1)) == -1 )
@@ -98,7 +97,14 @@ void stats()
 
 	}
 	// Unmap memory file
-	munmap(pmap,FILE_SIZE);
+	if ( munmap(pmap,FILE_SIZE) == -1 )
+	{
+		perror("Unmapping the memory");
+	}
+	else
+	{
+		printf("Memory unmapped.\n");
+	}
 }
 
 void write_screen()
