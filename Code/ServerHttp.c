@@ -6,18 +6,18 @@
 #include "ServerHttp.h"
 
 
-/* 
+/*
  * -- simplehttpd.c --
  * A (very) simple HTTP server
  *
  * Sistemas Operativos 2016/2017
- * 
+ *
  * Configs into shared mem ?
  */
 
 int main(int argc, char ** argv)
 {
-	 
+
 	/* Creating process' and running initial configuration */
 	init();
 	// main thread
@@ -31,11 +31,12 @@ void init()
 
 	clean = (clean_ptr) malloc(sizeof(clean_no));
 
+	running = 1;
 	clean->shm = 0;
 	clean->thread = 0;
 	clean->socket = 0;
 
-	/* Reading default configs */ 
+	/* Reading default configs */
 
 	if (read_configs())
 	{
@@ -56,23 +57,11 @@ void init()
 
 	/* Creating listener for pipe */
 
-	if ( fork() == 0 )
+	/*if ( fork() == 0 )
 	{
 		pipe_listener();
-	}
+	}*/
 
-	/*
-	if ( fork() == 0 )
-	{
-		stats();
-	}
-	
-	else if ( statistics_pid == -1)
-	{
-		printf("Erro: Could not create Statistics Process!\n");
-		clean_up();
-	}
-	*/
 	/* Creating shared memory */
 
 	if (create_shared_memory())
@@ -81,41 +70,37 @@ void init()
 	}
 	else clean_up();
 	clean->shm = 1;
-	
+
+	/* Creating statistics process */
+
+	if ( fork() == 0 )
+	{
+		stats();
+	}
+	else if ( statistics_pid == -1)
+	{
+		printf("Erro: Could not create Statistics Process!\n");
+		clean_up();
+	}
+
+
+
 
     /* Creating threadpool */
-    
+
     pthread_t threads [configuracoes->max_threads];
     for ( int i = 0; i < configuracoes->max_threads; i++ )
     {
-    	if (pthread_create(&threads[i], NULL, process_request, NULL)) 
+    	if (pthread_create(&threads[i], NULL, process_request, NULL))
     	{
-			perror("Error creating thread pool");
-			clean_up();
-		}
+				perror("Error creating thread pool");
+				clean_up();
+			}
     }
- 	
-	
-
-	// Create configuration process to comunicate
-	
-
-	/*
-	config_pid = fork();
-	if ( config_pid == 0)
-	{
-		printf("Config PID: %ld\n", (long) config_pid);
-	}
-	else if ( config_pid == -1 )
-	{
-		printf("Erro: Could not create Config process!\n");
-		clean_up();
-	}*/
-	//return;
 }
 
 void http_main_listener()
-{	
+{
 	struct sockaddr_in client_name;
 	socklen_t client_name_len = sizeof(client_name);
 
@@ -128,7 +113,7 @@ void http_main_listener()
 		exit(1);
 	clean ->socket = 1;
 
-	// Serve requests 
+	// Serve requests
 	while (1)
 	{
 		// Accept connection on socket
@@ -149,12 +134,12 @@ void http_main_listener()
 
 		// Verify if request is for a page or script
 		if(!strncmp(req_buf,CGI_EXPR,strlen(CGI_EXPR)))
-			execute_script(new_conn);	
+			execute_script(new_conn);
 		else
 			// Search file with html page and send to client
 			send_page(new_conn);
-	
-		// Terminate connection with client 
+
+		// Terminate connection with client
 		close(new_conn);
 
 	}
@@ -178,9 +163,9 @@ int get_request(int socket)
 				req_buf[j++]=buf[i++];
 			req_buf[j]='\0';
 		}
-	}	
+	}
 
-	// Currently only suports GET 
+	// Currently only suports GET
 	if(!found_get) {
 		printf("Request from client without a GET\n");
 		exit(1);
@@ -224,7 +209,7 @@ void execute_script(int socket)
 {
 	// Currently unsupserver_ported, return error code to client
 	cannot_execute(socket);
-	
+
 	return;
 }
 
@@ -248,20 +233,20 @@ void send_page(int socket)
 		not_found(socket);
 	}
 	else {
-		// Page found, send to client 
-	
+		// Page found, send to client
+
 		// First send HTTP header back to client
 		send_header(socket);
 
 		printf("send_page: sending page %s to client\n",buf_tmp);
 		while(fgets(buf_tmp,SIZE_BUF,fp))
 			send(socket,buf_tmp,strlen(buf_tmp),0);
-		
+
 		// Close file
 		fclose(fp);
 	}
 
-	return; 
+	return;
 
 }
 
@@ -290,10 +275,10 @@ void identify(int socket)
 
 
 // Reads a line (of at most 'n' bytes) from socket
-int read_line(int socket,int n) 
-{ 
+int read_line(int socket,int n)
+{
 	int n_read;
-	int not_eol; 
+	int not_eol;
 	int ret;
 	char new_char;
 
@@ -314,7 +299,7 @@ int read_line(int socket,int n)
 			// consumes next byte on buffer (LF)
 			read(socket,&new_char,sizeof(char));
 			continue;
-		}		
+		}
 		else {
 			buf[n_read]=new_char;
 			n_read++;
@@ -325,7 +310,7 @@ int read_line(int socket,int n)
 	#if DEBUG
 	printf("read_line: new line read from client socket: %s\n",buf);
 	#endif
-	
+
 	return n_read;
 }
 
@@ -342,7 +327,7 @@ int fireup(int port)
 		return -1;
 	}
 
-	// Binds new socket to listening port 
+	// Binds new socket to listening port
  	name.sin_family = AF_INET;
  	name.sin_port = htons(configuracoes->server_port);
  	name.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -356,7 +341,7 @@ int fireup(int port)
 		printf("Error listening to socket\n");
 		return -1;
 	}
- 
+
 	return(new_sock);
 }
 
@@ -405,7 +390,11 @@ void clean_up(int sig)
 {
 	printf("Server terminating..\n");
 	printf("Removing shared memory object.\n");
-
+	if ( clean->log_fd == 1 )
+	{
+		close(log_fd);
+	}
+	running = 0;
 	if ( clean->shm == 1 )
 	{
 		if ( shmctl(shmid,IPC_RMID, NULL) == -1)
@@ -418,12 +407,12 @@ void clean_up(int sig)
 		}
 	}
 	printf("Closing socket..\n");
-	
+
 	printf("Socket closed...");
 	printf("Statistics process terminated.");
 	kill(statistics_pid,SIGKILL);
 	kill(pipe_pid,SIGKILL);
-	
+
 	if ( clean->socket == 1)
 	{
 		close(socket_conn);
@@ -446,7 +435,7 @@ void pipe_listener()
     	perror("Cannot create pipe: ");
     	exit(0);
   	}
-  	// TODO: Remove pipe 
+  	// TODO: Remove pipe
   	printf("Piped created for comunications.\n");
 
   	/* Start reading */
@@ -460,7 +449,7 @@ void pipe_listener()
   	while(1)
   	{
   		printf("Waiting for pipe to comunicate..\n");
-	
+
 		//sem_wait(pipe_controller1);
 		if ( (num_bytes = read(named_pipe, &new_configs, sizeof(config))) < 0)
 			printf("Error on reading from named pipe.");

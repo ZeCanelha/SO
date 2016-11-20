@@ -28,6 +28,7 @@
 #define LOGFILE "server.log"
 #define LINE_SIZE 50
 #define MAX_BUFF 15
+#define STAT_BUFF 100
 
 // Header of HTTP reply to client
 #define	SERVER_STRING 	"Server: simpleserver/0.1.0\r\n"
@@ -53,6 +54,7 @@ typedef struct clean_p
 	int thread;
 	int socket;
 	int pipe;
+	int log_fd;
 }clean_no;
 typedef clean_no * clean_ptr;
 
@@ -75,7 +77,7 @@ typedef struct
 
 /* Statistics structs */
 
-typedef struct
+typedef struct stats_node
 {
 	int static_total_requests;
 	int cp_totalrequests;
@@ -83,9 +85,9 @@ typedef struct
 	float cp_request_medtime;
 
 	int request_type;
-	char * html_file;
-	char * request_time;
-	char * request_end_time;
+	char html_file[STAT_BUFF];
+	char request_time[STAT_BUFF];
+	char request_end_time[STAT_BUFF];
 
 }display_stat_node;
 
@@ -120,7 +122,9 @@ char buf_tmp[SIZE_BUF];
 int socket_conn,new_conn;
 int named_pipe;
 int shmid;
-
+int running;
+int log_fd;
+char *pmap;
 
 /* ServerHttp functions */
 
@@ -149,6 +153,6 @@ void stats();
 void update_stats();
 void write_screen();
 void reset_info();
-
+int get_stat();
 
 #endif
