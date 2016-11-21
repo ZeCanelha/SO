@@ -66,12 +66,78 @@ void enqueue_fifo ( Queue * queue, new_request new)
 
 void enqueue_static( Queue * queue , new_request new)
 {
+  node_ptr temp_ptr;
+  node_ptr ant;
+  node_ptr head;
+  head = queue->front;
 
+  temp_ptr = ( node_ptr ) malloc ( sizeof ( queue_node));
+  if ( temp_ptr != NULL )
+  {
+    temp_ptr->new = new;
+    temp_ptr->next = NULL;
+
+    if ( empty_queue(queue) == 1 )
+    {
+      queue->front = temp_ptr;
+      queue->rear = temp_ptr;
+      /* If the request_type is static, add at the end */
+      if ( new.request_type == 1 )
+      {
+        queue->rear->next = temp_ptr;
+        queue->rear = temp_ptr;
+      }
+      /* If the request type is not-static, add the node after all non-static nodes*/
+      else
+      {
+        while( head != NULL && (head->new.request_type ) == 2)
+        {
+          ant = head;
+          head = head->next;
+        }
+        ant->next = temp_ptr;
+        temp_ptr->next = head;
+      }
+    }
+  }
 }
 
 void enqueue_compressed( Queue * queue , new_request new)
 {
+  node_ptr temp_ptr;
+  node_ptr ant;
+  node_ptr head;
+  head = queue->front;
 
+  temp_ptr = ( node_ptr ) malloc ( sizeof ( queue_node));
+  if ( temp_ptr != NULL )
+  {
+    temp_ptr->new = new;
+    temp_ptr->next = NULL;
+
+    if ( empty_queue(queue) == 1 )
+    {
+      queue->front = temp_ptr;
+      queue->rear = temp_ptr;
+      /* If the request_type is compressed, add at the end */
+      if ( new.request_type == 2 )
+      {
+        queue->rear->next = temp_ptr;
+        queue->rear = temp_ptr;
+      }
+      /* If the request type is static, add the node after all non-static nodes*/
+      else
+      {
+        while( head != NULL && (head->new.request_type  == 1) )
+        {
+          ant = head;
+          head = head->next;
+        }
+        ant->next = temp_ptr;
+        temp_ptr->next = head;
+      }
+    }
+  }
 }
 
 void print_queue(Queue * queue){
@@ -82,4 +148,20 @@ void print_queue(Queue * queue){
         printf("Socket id: %d\nHTML file: %s", temp->new.socket_id, temp->new.html_file);
         temp=temp->next;
     }
+}
+
+new_request dequeue (Queue *queue)
+{
+  node_ptr temp_ptr;
+  new_request request;
+  if (empty_queue (queue) == 0)
+  {
+    temp_ptr = queue->front;
+    request = temp_ptr->new;
+    queue->front = queue->front->next;
+    if (empty_queue (queue) == 1)
+      queue->rear = NULL;
+    free (temp_ptr);
+    return (request);
+  }
 }

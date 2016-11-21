@@ -147,7 +147,7 @@ int create_shared_memory();
 void * process_request();
 void to_upper_case(char *);
 void clean_up();
-
+void decompress(char *);
 /* Statistics functions */
 
 void stats();

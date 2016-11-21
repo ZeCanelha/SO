@@ -35,6 +35,9 @@ void init()
 	clean->shm = 0;
 	clean->thread = 0;
 	clean->socket = 0;
+	clean->mmap = 0;
+	clean->pipe = 0;
+	clean->log_fd = 0;
 
 	/* Reading default configs */
 

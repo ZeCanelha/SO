@@ -4,12 +4,10 @@
 
 #include "ServerHttp.h"
 
-/* Create diferent types of scheduller
-	* Type 1: FIFO
-	* Type 2: Compressed
-	* Type 3: Static
+/* Request types
+ * 1 - Static
+ * 2 - Compressed
 */
-
 typedef struct request
 {
 	int socket_id;
@@ -20,8 +18,8 @@ typedef struct request
 
 typedef struct node_type
 {
-    new_request new;
-    struct node_type * next;
+  new_request new;
+  struct node_type * next;
 }queue_node;
 typedef struct node_type * node_ptr;
 typedef struct

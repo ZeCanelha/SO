@@ -84,8 +84,29 @@ void parse( char * line)
 void to_upper_case(char * string )
 {
     while( (*string = toupper(*string)))
+			string++;
+}
+
+void decompress( char * file_name )
+{
+	int ret_val;
+	char buffer[LINE_SIZE];
+
+	 if ( sprintf(buffer,"gunzip -c ./compressed %s > output.html",file_name) == -1 )
+	{
+		printf("Error reading compressed file.\n");
+	}
+	else
+	{
+		ret_val = system(buffer);
+		if ( (ret_val == -1 ) || (ret_val == 127) )
 		{
-        string++;
+			printf("Error decompressing the file\n" );
 		}
+		else
+		{
+			printf("File decompressd with success\n");
+		}
+	}
 
 }
