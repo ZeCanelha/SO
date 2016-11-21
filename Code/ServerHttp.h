@@ -145,6 +145,7 @@ void cannot_execute(int socket);
 
 int create_shared_memory();
 void * process_request();
+void to_upper_case(char *);
 void clean_up();
 
 /* Statistics functions */

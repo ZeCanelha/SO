@@ -23,8 +23,6 @@ void * process_request()
 
 }
 
-
-
 int read_configs()
 {
 	FILE *fp;
@@ -80,4 +78,11 @@ void parse( char * line)
 		temp = strtok(NULL,",\n");
 		strcpy(configuracoes->allowed,temp);
 	}
+}
+
+
+void to_upper_case(char * string )
+{
+    while( (*string = toupper(*string)))
+        *string++;
 }

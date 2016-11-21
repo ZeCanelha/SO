@@ -84,9 +84,7 @@ void init()
 	}
 
 
-
-
-    /* Creating threadpool */
+    /* Creating threadpool
 
     pthread_t threads [configuracoes->max_threads];
     for ( int i = 0; i < configuracoes->max_threads; i++ )
@@ -97,6 +95,7 @@ void init()
 				clean_up();
 			}
     }
+		*/
 }
 
 void http_main_listener()
@@ -105,6 +104,7 @@ void http_main_listener()
 	socklen_t client_name_len = sizeof(client_name);
 
 	signal(SIGINT,clean_up);
+
 
 	printf("Listening for HTTP requests on server_port %d\n",configuracoes->server_port);
 
