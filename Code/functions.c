@@ -84,5 +84,8 @@ void parse( char * line)
 void to_upper_case(char * string )
 {
     while( (*string = toupper(*string)))
-        *string++;
+		{
+        string++;
+		}
+
 }

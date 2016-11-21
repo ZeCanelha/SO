@@ -24,22 +24,6 @@ void enqueue(Queue * queue, new_request new , char * scheduller)
   }
 }
 
-
-void enqueue_fifo( Queue * queue , new_request new)
-{
-
-}
-
-void enqueue_static( Queue * queue , new_request new)
-{
-
-}
-
-void enqueue_compressed( Queue * queue , new_request new)
-{
-
-}
-
 void create_queue( Queue * queue )
 {
   queue->front = NULL;
@@ -80,12 +64,22 @@ void enqueue_fifo ( Queue * queue, new_request new)
     queue->rear = temp_ptr;
 }
 
+void enqueue_static( Queue * queue , new_request new)
+{
+
+}
+
+void enqueue_compressed( Queue * queue , new_request new)
+{
+
+}
+
 void print_queue(Queue * queue){
     node_ptr temp;
     temp=queue->front;
     while(temp!=NULL)
     {
-        printf("Socket id: %d\nHTML file: %s", temp->new.socket_id, temp->new->html_file);
+        printf("Socket id: %d\nHTML file: %s", temp->new.socket_id, temp->new.html_file);
         temp=temp->next;
     }
 }
