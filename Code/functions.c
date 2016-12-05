@@ -54,6 +54,7 @@ void parse( char * line)
 	char *line_temp = (char*)malloc(LINE_SIZE * sizeof(char));
 	strcpy(line_temp,line);
 
+	int i = 0;
 
 	temp = strtok(line_temp, "=");
 
@@ -75,8 +76,13 @@ void parse( char * line)
 	}
 	if ( strcmp(temp,"ALLOWED") == 0)
 	{
-		temp = strtok(NULL,",\n");
-		strcpy(configuracoes->allowed,temp);
+		while ( ( temp = strtok(NULL,";")) != NULL )
+		{
+			strcpy(configuracoes->allowed[i],temp);
+			i++;
+		}
+		current_files_allowed_count = i;
+
 	}
 }
 
@@ -108,5 +114,17 @@ void decompress( char * file_name )
 			printf("File decompressd with success\n");
 		}
 	}
+}
 
+void print_configs()
+{
+	printf("Current configurations: \n");
+	printf("SERVERPORT: %d\n", configuracoes->server_port);
+	printf("THREADPOOL: %d\n", configuracoes->max_threads);
+	printf("SCHEDULING: %s\n", configuracoes->scheduling);
+	printf("ALLOWED:");
+	for ( int i = 0; i < current_files_allowed_count; i++)
+	{
+		printf(" %s ", configuracoes->allowed[i]);
+	}
 }

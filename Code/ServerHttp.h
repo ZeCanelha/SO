@@ -29,6 +29,8 @@
 #define LINE_SIZE 50
 #define MAX_BUFF 15
 #define STAT_BUFF 100
+#define MAX_FILES_ALLOWED 5
+#define FILES_ALLOWED_SIZE 25
 
 // Header of HTTP reply to client
 #define	SERVER_STRING 	"Server: simpleserver/0.1.0\r\n"
@@ -64,7 +66,7 @@ typedef struct
 	int server_port;
 	int max_threads;
 	char scheduling[MAX_BUFF];
-	char allowed[MAX_BUFF];
+	char allowed[MAX_FILES_ALLOWED][FILES_ALLOWED_SIZE];
 }config_node;
 
 typedef struct
@@ -124,6 +126,7 @@ int named_pipe;
 int shmid;
 int running;
 int log_fd;
+int current_files_allowed_count;
 char *pmap;
 
 /* ServerHttp functions */
@@ -146,6 +149,7 @@ void cannot_execute(int socket);
 int create_shared_memory();
 void * process_request();
 void to_upper_case(char *);
+void print_configs();
 void clean_up();
 void decompress(char *);
 /* Statistics functions */

@@ -43,11 +43,7 @@ void init()
 
 	if (read_configs())
 	{
-		printf("Current configurations: \n");
-		printf("SERVERPORT: %d\n", configuracoes->server_port);
-		printf("THREADPOOL: %d\n", configuracoes->max_threads);
-		printf("SCHEDULING: %s\n", configuracoes->scheduling);
-		printf("ALLOWED: %s\n", configuracoes->allowed);
+		print_configs();
 	}
 	else exit(0);
 
