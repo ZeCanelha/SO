@@ -13,7 +13,9 @@
 
 FILE *fp;
 
-sem_t * pipe_controller;
+//sem_t * pipe_controller;
+int named_pipe;
+
 
 int main(int argc, char const *argv[])
 {
@@ -32,7 +34,16 @@ void pipe_comunication()
 	int allowed;
 	int threadpool;
 	int flag = 0;
-	
+
+
+		if ( (named_pipe = open(NAMED_PIPE,O_WRONLY)) < 0 )
+		{
+			perror("Cannot open  pipe.");
+		}
+		else
+		{
+			printf("Pipe opened with success!\n");
+		}
 
 
 	printf("Gestor de configurações.. \n");
@@ -70,8 +81,10 @@ void pipe_comunication()
 		}
 	}
 
-	/* unlink named_pipe */
-	unlink(NAMED_PIPE);
+	if ( close(named_pipe) < 0 )
+	{
+		perror("Error closing pipe.");
+	}
 
 }
 
@@ -79,7 +92,6 @@ void pipe_comunication()
 void update_values(int  scheduling , int  allowed , int threadpool )
 {
 
-	int named_pipe;
 
 	config new_configs;
 
@@ -88,18 +100,9 @@ void update_values(int  scheduling , int  allowed , int threadpool )
 	new_configs.max_threads = threadpool;
 	/* Open named_pipe and semaphore for comunications */
 
-	pipe_controller = sem_open("PIPE_C",0);
+//	pipe_controller = sem_open("PIPE_C",0);
 
-	if ( (named_pipe = open(NAMED_PIPE,O_WRONLY)) < 0 )
-	{
-		perror("Cannot open  pipe.");
-	}
-	else
-	{
-		printf("Pipe opened with success!\n");
-	}
-
-	if ( write(named_pipe,&new_configs,sizeof(config)) < 0 )
+	if ( write(named_pipe, &new_configs, sizeof(config)) < 0 )
 	{
 		perror("Cannot write to pipe");
 	}
@@ -109,10 +112,6 @@ void update_values(int  scheduling , int  allowed , int threadpool )
 		/* Abrir o semaforo para o processo principal poder ler do pipe */
 		//sem_post(pipe_controller);
 	}
-	/*
-	if ( close(named_pipe) < 0 )
-	{
-		perror("Error closing pipe.");
-	}*/
+
 
 }

@@ -21,6 +21,8 @@
 #include <semaphore.h>
 #include <sys/shm.h>
 
+#include "scheduler.h"
+
 
 // Produce debug information
 #define DEBUG	  	1
@@ -38,7 +40,7 @@
 #define HEADER_2	"Content-Type: text/html\r\n\r\n"
 
 #define GET_EXPR	"GET /"
-#define CGI_EXPR	"cgi-bin/"
+#define CGI_EXPR	"scripts/"
 #define SIZE_BUF	1024
 
 
@@ -93,7 +95,6 @@ typedef struct stats_node
 
 }display_stat_node;
 
-
 // Pointer to struct
 
 display_stat_node  * display_stats;
@@ -110,11 +111,16 @@ clean_ptr clean;
 config_node  * configuracoes;
 
 
-
 // Threads
 
-pthread_mutex_t mutex;
+pthread_mutex_t mutex_buffer;
+pthread_cond_t buffer_cond;
+pthread_t scheduler_thread;
 
+
+/* Scheduler Queue Pointer */
+
+Queue buffer;
 
 // Global Variables Declaration
 
@@ -128,6 +134,7 @@ int running;
 int log_fd;
 int current_files_allowed_count;
 char *pmap;
+int buffer_count;
 
 /* ServerHttp functions */
 
@@ -151,7 +158,9 @@ void * process_request();
 void to_upper_case(char *);
 void print_configs();
 void clean_up();
-void decompress(char *);
+int decompress(char *);
+int check_existent_file(char *);
+int is_permited(char *);
 /* Statistics functions */
 
 void stats();

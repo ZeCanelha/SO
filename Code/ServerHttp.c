@@ -47,20 +47,6 @@ void init()
 	}
 	else exit(0);
 
-
-	/* Open semaphore created on config.c. To do so , 1st program to run must be config */
-
-	/* Inicializar o valor do semaforo a 0 */
-	sem_unlink("PIPE_C");
-	pipe_controller1 = sem_open("PIPE_C",O_CREAT|O_EXCL, 0700,0);
-
-	/* Creating listener for pipe */
-
-	/*if ( fork() == 0 )
-	{
-		pipe_listener();
-	}*/
-
 	/* Creating shared memory */
 
 	if (create_shared_memory())
@@ -75,6 +61,7 @@ void init()
 	if ( fork() == 0 )
 	{
 		stats();
+		exit(0);
 	}
 	else if ( statistics_pid == -1)
 	{
@@ -82,19 +69,30 @@ void init()
 		clean_up();
 	}
 
+	/* Inicializar o valor do semaforo a 0 */
+	//sem_unlink("PIPE_C");
+	//pipe_controller1 = sem_open("PIPE_C",O_CREAT|O_EXCL, 0777,0);
 
-    /* Creating threadpool
+	/* Creating listener for pipe */
 
-    pthread_t threads [configuracoes->max_threads];
-    for ( int i = 0; i < configuracoes->max_threads; i++ )
-    {
-    	if (pthread_create(&threads[i], NULL, process_request, NULL))
-    	{
-				perror("Error creating thread pool");
-				clean_up();
-			}
-    }
-		*/
+	if ( fork() == 0 )
+	{
+		pipe_listener();
+		exit(0);
+	}
+
+	/* Create request buffer */
+
+    create_queue(&buffer);
+		buffer_count = 0;
+
+	/* Create schedulling thread
+
+	if ( pthread_create(&scheduler_thread,NULL,scheduler,NULL) )
+	{
+		printf("Error creating scheduling.\n");
+	} */
+
 }
 
 void http_main_listener()
@@ -131,12 +129,24 @@ void http_main_listener()
 			continue;
 		}
 
+		// Create struct to store the request
+		new_request request;
 		// Verify if request is for a page or script
 		if(!strncmp(req_buf,CGI_EXPR,strlen(CGI_EXPR)))
-			execute_script(new_conn);
+		{
+			request.socket_id = new_conn;
+			strcpy(request.html_file, req_buf);
+			request.request_type = 2;
+			//execute_script(new_conn);
+		}
 		else
+		{
 			// Search file with html page and send to client
-			send_page(new_conn);
+			//send_page(new_conn);
+			request.socket_id = new_conn;
+			strcpy(request.html_file, req_buf);
+			request.request_type = 1;
+		}
 
 		// Terminate connection with client
 		close(new_conn);
@@ -429,6 +439,8 @@ void pipe_listener()
 	int num_bytes;
 	pipe_pid = getpid();
 
+	unlink(NAMED_PIPE);
+																				//ugo
 	if ((mkfifo(NAMED_PIPE, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST))
   	{
     	perror("Cannot create pipe: ");
@@ -447,12 +459,13 @@ void pipe_listener()
 
   	while(1)
   	{
-  		printf("Waiting for pipe to comunicate..\n");
+			printf("Waiting for pipe to comunicate %d..\n", getpid());
 
-		//sem_wait(pipe_controller1);
-		if ( (num_bytes = read(named_pipe, &new_configs, sizeof(config))) < 0)
-			printf("Error on reading from named pipe.");
-		printf("Received: %d,%d, %d\n", new_configs.schedulling, new_configs.allowed , new_configs.max_threads);
+			// sem_wait(pipe_controller1);
+			if ( (num_bytes = read(named_pipe, &new_configs, sizeof(config))) < 0)
+				printf("Error on reading from named pipe.");
+
+			printf("Received: <%lu> <%d>, %d,%d, %d\n", sizeof(config), num_bytes, new_configs.schedulling, new_configs.allowed , new_configs.max_threads);
 		//printf("[SERVER] Received:\nSchedulling type:%s\nTypes Allowed: %s\nThreadpool: %d\n",new_configs->scheduling, new_configs->allowed, new_configs->max_threads);
 
 	/* TODO: Check if thread pool was modified and if so , wait the current ones to execute */

@@ -2,7 +2,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include "ServerHttp.h"
+#define MAX_BUFFER 15
 
 /* Request types
  * 1 - Static
@@ -11,7 +11,7 @@
 typedef struct request
 {
 	int socket_id;
-	char html_file[MAX_BUFF];
+	char html_file[MAX_BUFFER];
 	int request_type;
 }new_request;
 

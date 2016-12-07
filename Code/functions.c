@@ -18,11 +18,6 @@ int create_shared_memory()
 
 }
 
-void * process_request()
-{
-
-}
-
 int read_configs()
 {
 	FILE *fp;
@@ -81,6 +76,7 @@ void parse( char * line)
 			strcpy(configuracoes->allowed[i],temp);
 			i++;
 		}
+		configuracoes->allowed[i-1][strlen(configuracoes->allowed[i-1]) -1] = '\0';
 		current_files_allowed_count = i;
 
 	}
@@ -93,7 +89,7 @@ void to_upper_case(char * string )
 			string++;
 }
 
-void decompress( char * file_name )
+int decompress( char * file_name )
 {
 	int ret_val;
 	char buffer[LINE_SIZE];
@@ -105,15 +101,16 @@ void decompress( char * file_name )
 	else
 	{
 		ret_val = system(buffer);
-		if ( (ret_val == -1 ) || (ret_val == 127) )
+		if ( (ret_val == -1 ) || (ret_val == 256) || (ret_val == 127) )
 		{
-			printf("Error decompressing the file\n" );
+			return -1;
 		}
 		else
 		{
 			printf("File decompressd with success\n");
 		}
 	}
+	return 1;
 }
 
 void print_configs()
@@ -126,5 +123,38 @@ void print_configs()
 	for ( int i = 0; i < current_files_allowed_count; i++)
 	{
 		printf(" %s ", configuracoes->allowed[i]);
+	}
+	printf("\n");
+}
+
+int is_permited( char * filename )
+{
+	int i;
+	for ( i = 0; i < current_files_allowed_count; i++)
+	{
+		if ( strcmp(filename,configuracoes->allowed[i]) == 0 )
+		{
+			return 1;
+		}
+	}
+	return -1;
+}
+
+
+void * scheduler ()
+{
+	/* TODO: Create threadpool to handle requests */
+
+	while(1)
+	{
+		/* Waits on a condition variable, in this case, buffer count */
+		pthread_mutex_lock(&mutex_buffer);
+		while( buffer_count == 0 )
+		{
+			pthread_cond_wait(&buffer_cond,&mutex_buffer);
+		}
+
+		new_request request;
+		request = dequeue(&buffer);
 	}
 }

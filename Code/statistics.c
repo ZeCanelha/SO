@@ -79,7 +79,7 @@ void stats()
 	}
 	else
 	{
-		printf("Write with success.\n");
+		printf("STATS: Write with success.\n");
 	}
 
 	/* Map the file in memory */
@@ -94,7 +94,7 @@ void stats()
 	{
 		// TODO: Write information to file anytime a request is completed
 		// TODO: Synchronized with a read/write semaphore
-
+		 pause();
 	}
 	// Unmap memory file
 	if ( munmap(pmap,FILE_SIZE) == -1 )

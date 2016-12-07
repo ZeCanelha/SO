@@ -1,4 +1,5 @@
 #include "scheduler.h"
+#include "ServerHttp.h"
 
 void enqueue(Queue * queue, new_request new , char * scheduller)
 {
