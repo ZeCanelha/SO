@@ -19,36 +19,29 @@ int named_pipe;
 
 int main(int argc, char const *argv[])
 {
-	//sem_unlink("PIPE_C");
-
 	pipe_comunication();
+	signal(SIGPIPE,catch_pipe);
 }
-
-/* Update configurations through named pipe */
-/* Wait for threads to finish if we need to change the threadpool */
-
 void pipe_comunication()
 {
 	char c;
-	int scheduling;
-	int allowed;
-	int threadpool;
+	char aux[FILES_ALLOWED_SIZE];
 	int flag = 0;
-
-
-		if ( (named_pipe = open(NAMED_PIPE,O_WRONLY)) < 0 )
-		{
-			perror("Cannot open  pipe.");
-		}
-		else
-		{
-			printf("Pipe opened with success!\n");
-		}
-
+	int sched;
+	int thread;
+	if ( (named_pipe = open(NAMED_PIPE,O_WRONLY)) < 0 )
+	{
+		perror("Cannot open  pipe.");
+	}
+	else
+	{
+		printf("Pipe opened with success!\n");
+	}
 
 	printf("Gestor de configurações.. \n");
 	while(1)
 	{
+		int i = 0;
 		fflush(stdin);
 		printf("Press enter to continue\n");
 		c = getchar();
@@ -59,25 +52,52 @@ void pipe_comunication()
 			do
 			{
 				printf("Tipo de escalonamento:\n1.Static.\n2.Compressed\n3.FIFO\n4.Default\n");
-				scanf("%d",&scheduling);
-
-				if ( scheduling > 0 && scheduling < 5 )
-					flag = 1;
+				scanf("%d",&sched);
+				switch (sched) {
+					case 1:
+						strcpy(new_configs.schedulling,"Static");
+						flag = 1;
+						break;
+					case 2:
+						strcpy(new_configs.schedulling,"Compressed");
+						flag = 1;
+						break;
+					case 3:
+						strcpy(new_configs.schedulling,"FIFO");
+						flag = 1;
+						break;
+					case 4:
+						strcpy(new_configs.schedulling,"Default");
+						flag = 1;
+						break;
+					default:
+						printf("ValueError.\n");
+						break;
+				}
 			}while(flag == 0);
-			flag = 0;
-			do
-			{
-				printf("Permissoes:\n1.gz\n2.zip\n3.default): ");
-				scanf("%d",&allowed);
-				if ( allowed > 0 && allowed < 4 )
-					flag = 1;
-			}while(flag == 0);
-			flag = 0;
+			getchar();
 
 			printf("\nNumero de threads(0 para manter): ");
-			scanf("%d",&threadpool);
+			scanf("%d",&thread);
+			new_configs.max_threads = thread;
 
-			update_values(scheduling,allowed,threadpool);
+			getchar();
+			flag = 0;
+			printf("(type EXIT to end.Files allowed: \n");
+			while( i < MAX_FILES_ALLOWED)
+			{
+				printf("-> ");
+				fgets(aux,FILES_ALLOWED_SIZE,stdin);
+				if ( strcmp(aux,"EXIT\n") == 0)
+					break;
+				aux[strlen(aux)-1] = '\0';
+				strcpy(new_configs.allowed[i],aux);
+				i++;
+			}
+			new_configs.string_counter = i;
+
+
+			update_values();
 		}
 	}
 
@@ -87,21 +107,8 @@ void pipe_comunication()
 	}
 
 }
-
-
-void update_values(int  scheduling , int  allowed , int threadpool )
+void update_values()
 {
-
-
-	config new_configs;
-
-	new_configs.schedulling = scheduling;
-	new_configs.allowed = allowed;
-	new_configs.max_threads = threadpool;
-	/* Open named_pipe and semaphore for comunications */
-
-//	pipe_controller = sem_open("PIPE_C",0);
-
 	if ( write(named_pipe, &new_configs, sizeof(config)) < 0 )
 	{
 		perror("Cannot write to pipe");
@@ -109,9 +116,11 @@ void update_values(int  scheduling , int  allowed , int threadpool )
 	else
 	{
 		printf("Written to pipe.\n");
-		/* Abrir o semaforo para o processo principal poder ler do pipe */
-		//sem_post(pipe_controller);
 	}
+}
 
-
+void catch_pipe()
+{
+	printf("Error: Pipe error.\nTerminating..");
+	//exit(0);
 }

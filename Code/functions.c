@@ -158,3 +158,15 @@ void * scheduler ()
 		request = dequeue(&buffer);
 	}
 }
+
+void catch_pipe()
+{
+	printf("Error on reading/write file..\n");
+	clean_up();
+}
+
+void sig_stop()
+{
+	printf("Control+Z pressed.\n");
+	clean_up();
+}

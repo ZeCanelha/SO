@@ -73,10 +73,10 @@ typedef struct
 
 typedef struct
 {
-	int schedulling;
-	int allowed;
+	char schedulling[MAX_BUFF];
+	int string_counter;
+	char allowed[MAX_FILES_ALLOWED][FILES_ALLOWED_SIZE];
 	int max_threads;
-
 }config;
 
 /* Statistics structs */
@@ -114,6 +114,7 @@ config_node  * configuracoes;
 // Threads
 
 pthread_mutex_t mutex_buffer;
+pthread_mutex_t config_mutex;
 pthread_cond_t buffer_cond;
 pthread_t scheduler_thread;
 
@@ -161,6 +162,8 @@ void clean_up();
 int decompress(char *);
 int check_existent_file(char *);
 int is_permited(char *);
+void catch_pipe();
+void sig_stop();
 /* Statistics functions */
 
 void stats();

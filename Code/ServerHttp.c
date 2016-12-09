@@ -101,6 +101,8 @@ void http_main_listener()
 	socklen_t client_name_len = sizeof(client_name);
 
 	signal(SIGINT,clean_up);
+	//signal(SIGPIPE,catch_pipe);
+	//signal(SIGTSTP,sig_stop);
 
 
 	printf("Listening for HTTP requests on server_port %d\n",configuracoes->server_port);
@@ -431,7 +433,6 @@ void clean_up(int sig)
 
 }
 
-
 void pipe_listener()
 {
 	/* Read configs from the named pipe */
@@ -450,7 +451,7 @@ void pipe_listener()
   	printf("Piped created for comunications.\n");
 
   	/* Start reading */
-	if ( (named_pipe = open(NAMED_PIPE,O_RDWR) < 0 ))
+	if ( (named_pipe = open(NAMED_PIPE,O_RDWR)) < 0 )
 	{
 		printf("Error openig pipe for reading.\n");
 	}
@@ -464,10 +465,42 @@ void pipe_listener()
 			// sem_wait(pipe_controller1);
 			if ( (num_bytes = read(named_pipe, &new_configs, sizeof(config))) < 0)
 				printf("Error on reading from named pipe.");
+			//printf("Received: <%lu> <%d>, Schedulling: %s,String Counter: %d, Max Threads: %d\n", sizeof(config), num_bytes, new_configs.schedulling, new_configs.string_counter , new_configs.max_threads);
 
-			printf("Received: <%lu> <%d>, %d,%d, %d\n", sizeof(config), num_bytes, new_configs.schedulling, new_configs.allowed , new_configs.max_threads);
-		//printf("[SERVER] Received:\nSchedulling type:%s\nTypes Allowed: %s\nThreadpool: %d\n",new_configs->scheduling, new_configs->allowed, new_configs->max_threads);
+			// When we accept a request, buffer needs to check what schedulling is running.
+			// TO prevent memory conflits , use mutex
 
-	/* TODO: Check if thread pool was modified and if so , wait the current ones to execute */
+			pthread_mutex_lock(&config_mutex);
+
+			if ( strcmp(new_configs.schedulling,"Default") == 0 || strcmp(new_configs.schedulling,configuracoes->scheduling) == 0)
+			{
+				printf("Schedul set as default: %s\n",configuracoes->scheduling);
+			}
+			else
+			{
+				strcpy(configuracoes->scheduling,new_configs.schedulling);
+				printf("New schedul: %s\n",configuracoes->scheduling);
+			}
+			printf("Allowed files: \n");
+			for ( int i = 0; i < new_configs.string_counter; i++ )
+			{
+				strcpy(configuracoes->allowed[i],new_configs.allowed[i]);
+				printf("- %s\n",configuracoes->allowed[i]);
+			}
+
+			// Update number o files allowed
+			current_files_allowed_count = new_configs.string_counter;
+
+			if ( new_configs.max_threads == configuracoes->max_threads || new_configs.max_threads == 0)
+			{
+				printf("Number of thread set as default: %d\n",configuracoes->max_threads);
+			}
+			else
+			{
+				/* TODO: Wait all threads to complete their job */
+			}
+
+			pthread_mutex_unlock(&config_mutex);
+
   	}
 }
