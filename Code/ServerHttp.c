@@ -150,6 +150,27 @@ void http_main_listener()
 			request.request_type = 1;
 		}
 
+		pthread_mutex_lock(&config_mutex);
+		pthread_mutex_lock(&mutex_buffer);
+		if ( buffer_count == SERVER_CAPACITY - 1)
+		{
+			// Send response to client -> html format ?
+			close(new_conn);
+			pthread_mutex_unlock(&mutex_buffer);
+			continue;
+		}
+		enqueue(&buffer,request,configuracoes->scheduling);
+		pthread_mutex_unlock(&config_mutex);
+		buffer_count++;
+
+		/* Notify 
+		 * buffer_cond *
+		 */
+		if ( buffer_count == 1 )
+		{
+			pthread_cond_broadcast(&buffer_cond)
+		}
+		pthread_mutex_unlock(&mutex_buffer);
 		// Terminate connection with client
 		close(new_conn);
 

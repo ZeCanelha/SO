@@ -28,6 +28,7 @@
 #define DEBUG	  	1
 #define FILENAME "..//configs/configs.txt"
 #define LOGFILE "server.log"
+#define SERVER_CAPACITY 10
 #define LINE_SIZE 50
 #define MAX_BUFF 15
 #define STAT_BUFF 100

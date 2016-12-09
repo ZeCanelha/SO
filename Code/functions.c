@@ -149,13 +149,20 @@ void * scheduler ()
 	{
 		/* Waits on a condition variable, in this case, buffer count */
 		pthread_mutex_lock(&mutex_buffer);
+		/*  If the condition is false:
+		 * buffer_cond*
+		 * Mutex is released
+		 * Waits until someone signals that the condition should be tested again.
+		*/
 		while( buffer_count == 0 )
 		{
 			pthread_cond_wait(&buffer_cond,&mutex_buffer);
 		}
+		// Mutual Exclusion
 
 		new_request request;
 		request = dequeue(&buffer);
+		pthread_mutex_unlock(&mutex_buffer);
 	}
 }
 
