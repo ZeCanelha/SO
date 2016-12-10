@@ -86,13 +86,18 @@ void init()
     create_queue(&buffer);
 		buffer_count = 0;
 
-	/* Create schedulling thread
-
-	if ( pthread_create(&scheduler_thread,NULL,scheduler,NULL) )
+	/* Create thread_poll */
+	pthread_t scheduler_thread[configuracoes->max_threads];
+	for ( int i = 0; i < configuracoes->max_threads; i++)
 	{
-		printf("Error creating scheduling.\n");
-	} */
+		if ( pthread_create(&scheduler_thread[i],NULL,scheduler,NULL))
+		{
+			printf("Error creating threadpool.\n");
+			clean_up();
+		}
+	}
 
+	printf("Threadpoll created\n" );
 }
 
 void http_main_listener()
@@ -135,16 +140,15 @@ void http_main_listener()
 		new_request request;
 		// Verify if request is for a page or script
 		if(!strncmp(req_buf,CGI_EXPR,strlen(CGI_EXPR)))
-		{
+		{}
+		else if(!strncmp(req_buf,"scripts/",strlen("scripts/"))){
 			request.socket_id = new_conn;
 			strcpy(request.html_file, req_buf);
 			request.request_type = 2;
-			//execute_script(new_conn);
 		}
 		else
 		{
 			// Search file with html page and send to client
-			//send_page(new_conn);
 			request.socket_id = new_conn;
 			strcpy(request.html_file, req_buf);
 			request.request_type = 1;
@@ -152,27 +156,28 @@ void http_main_listener()
 
 		pthread_mutex_lock(&config_mutex);
 		pthread_mutex_lock(&mutex_buffer);
+
+		/*
+				* If server is full:
+						* Send unavailable service to client
+		*/
 		if ( buffer_count == SERVER_CAPACITY - 1)
 		{
-			// Send response to client -> html format ?
+			server_unavailable(new_conn);
 			close(new_conn);
 			pthread_mutex_unlock(&mutex_buffer);
 			continue;
 		}
 		enqueue(&buffer,request,configuracoes->scheduling);
 		pthread_mutex_unlock(&config_mutex);
+
 		buffer_count++;
 
-		/* Notify 
-		 * buffer_cond *
-		 */
-		if ( buffer_count == 1 )
-		{
-			pthread_cond_broadcast(&buffer_cond)
-		}
+		pthread_cond_signal(&buffer_cond);
+
 		pthread_mutex_unlock(&mutex_buffer);
 		// Terminate connection with client
-		close(new_conn);
+		//close(new_conn);
 
 	}
 
@@ -237,47 +242,52 @@ void send_header(int socket)
 
 
 // Execute script in /cgi-bin
-void execute_script(int socket)
+void execute_script(new_request new)
 {
-	// Currently unsupserver_ported, return error code to client
-	cannot_execute(socket);
+	int ret_val;
+	char buff_temp[SIZE_BUF];
+	FILE * fp;
 
+	if ( (ret_val = decompress(new.html_file)) == -1 )
+	{
+		cannot_execute(new.socket_id);
+		close(new.socket_id);
+		return;
+	}
+
+	send_header(new.socket_id);
+	printf("send_page: sending page output.hmtl to client\n");
+	while(fgets(buff_temp,SIZE_BUF,fp))
+		send(new.socket_id,buff_temp,strlen(buff_temp),0);
+
+	close(new.socket_id);
 	return;
 }
 
 
 // Send html page to client
-void send_page(int socket)
+void send_page(new_request new)
 {
 	FILE * fp;
-
+	char buff_temp[SIZE_BUF];
 	// Searchs for page in directory htdocs
-	sprintf(buf_tmp,"htdocs/%s",req_buf);
+	sprintf(buff_temp,"htdocs/%s",new.html_file);
 
 	#if DEBUG
 	printf("send_page: searching for %s\n",buf_tmp);
 	#endif
 
-	// Verifies if file exists
-	if((fp=fopen(buf_tmp,"rt"))==NULL) {
-		// Page not found, send error to client
-		printf("send_page: page %s not found, alerting client\n",buf_tmp);
-		not_found(socket);
-	}
-	else {
-		// Page found, send to client
+	// Page found, send to client
+	fp = fopen(buff_temp,"rt");
+	// First send HTTP header back to client
+	send_header(new.socket_id);
+	printf("send_page: sending page %s to client\n",buff_temp);
+	while(fgets(buff_temp,SIZE_BUF,fp))
+		send(new.socket_id,buff_temp,strlen(buff_temp),0);
 
-		// First send HTTP header back to client
-		send_header(socket);
-
-		printf("send_page: sending page %s to client\n",buf_tmp);
-		while(fgets(buf_tmp,SIZE_BUF,fp))
-			send(socket,buf_tmp,strlen(buf_tmp),0);
-
-		// Close file
-		fclose(fp);
-	}
-
+	// Close file
+	fclose(fp);
+	close(new.socket_id);
 	return;
 
 }
@@ -416,6 +426,19 @@ void cannot_execute(int socket)
 	return;
 }
 
+void server_unavailable(int socket)
+{
+	sprintf(buf,"HTTP/1.0 503 Service Unavailable\r\n");
+	send(socket,buf, strlen(buf), 0);
+	sprintf(buf,"Content-type: text/html\r\n");
+	send(socket,buf, strlen(buf), 0);
+	sprintf(buf,"\r\n");
+	send(socket,buf, strlen(buf), 0);
+	sprintf(buf,"<P>The server is currently unable to handle the request due to a temporary overloading or maintenance of the server.\r\n");
+	send(socket,buf, strlen(buf), 0);
+
+	return;
+}
 
 // Closes socket before closing
 void clean_up(int sig)
@@ -439,16 +462,16 @@ void clean_up(int sig)
 		}
 	}
 	printf("Closing socket..\n");
-
-	printf("Socket closed...");
-	printf("Statistics process terminated.");
-	kill(statistics_pid,SIGKILL);
-	kill(pipe_pid,SIGKILL);
-
 	if ( clean->socket == 1)
 	{
 		close(socket_conn);
 	}
+	printf("Socket closed...");
+
+
+	printf("Statistics process terminated.");
+	kill(statistics_pid,SIGKILL);
+	kill(pipe_pid,SIGKILL);
 
 	exit(0);
 

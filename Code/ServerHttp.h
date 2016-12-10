@@ -41,7 +41,7 @@
 #define HEADER_2	"Content-Type: text/html\r\n\r\n"
 
 #define GET_EXPR	"GET /"
-#define CGI_EXPR	"scripts/"
+#define CGI_EXPR	"cgi-bin/"
 #define SIZE_BUF	1024
 
 
@@ -117,7 +117,6 @@ config_node  * configuracoes;
 pthread_mutex_t mutex_buffer;
 pthread_mutex_t config_mutex;
 pthread_cond_t buffer_cond;
-pthread_t scheduler_thread;
 
 
 /* Scheduler Queue Pointer */
@@ -150,18 +149,19 @@ void identify(int socket);
 int get_request(int socket);
 int  read_line(int socket, int n);
 void send_header(int socket);
-void send_page(int socket);
-void execute_script(int socket);
+void send_page(new_request );
+void execute_script(new_request );
 void not_found(int socket);
 void cannot_execute(int socket);
+void server_unavailable(int socket);
 
 int create_shared_memory();
-void * process_request();
+void * scheduler();
 void to_upper_case(char *);
 void print_configs();
 void clean_up();
 int decompress(char *);
-int check_existent_file(char *);
+int check_existent_file(char * , int );
 int is_permited(char *);
 void catch_pipe();
 void sig_stop();

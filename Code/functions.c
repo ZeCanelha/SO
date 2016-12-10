@@ -141,29 +141,106 @@ int is_permited( char * filename )
 }
 
 
-void * scheduler ()
+int check_existent_file( char * filename, int type )
 {
-	/* TODO: Create threadpool to handle requests */
+	FILE * fp;
+	char temp[MAX_FILES_ALLOWED+MAX_BUFF];
 
+	if ( type == 1 )
+	{
+		sprintf(temp,"htdocs/%s",filename);
+		if ( (fp = fopen(temp,"rt")) == NULL )
+		{
+			fclose(fp);
+			return -1;
+		}
+	}
+	if ( type == 2 )
+	{
+		sprintf(temp,"compressed/%s", filename);
+
+		if ( is_permited(filename) == -1 )
+		{
+			printf("File not allowed.\n");
+			return -1;
+		}
+		if ( (fp = fopen(temp,"rt")) == NULL )
+		{
+			fclose(fp);
+			return -1;
+		}
+	}
+	else
+	{
+		return -1;
+	}
+	fclose(fp);
+	return 1;
+}
+
+void * scheduler ( )
+{
+
+	int ret_val;
 	while(1)
 	{
 		/* Waits on a condition variable, in this case, buffer count */
 		pthread_mutex_lock(&mutex_buffer);
 		/*  If the condition is false:
-		 * buffer_cond*
-		 * Mutex is released
-		 * Waits until someone signals that the condition should be tested again.
+					* buffer_cond*
+					* Mutex is released
+					* Waits until gets notified
 		*/
-		while( buffer_count == 0 )
+		while(buffer_count == 0 )
 		{
 			pthread_cond_wait(&buffer_cond,&mutex_buffer);
 		}
-		// Mutual Exclusion
 
+		/* Mutual Exclusion
+				* Get request from buffer
+				* Process request
+				* Update buffer count
+		*/
 		new_request request;
 		request = dequeue(&buffer);
 		pthread_mutex_unlock(&mutex_buffer);
+		//printf("<%d>\n", request.request_type);
+		/* Verify:
+				* Request Type:
+		 			* 1 - Static
+					* 2 - Compressed
+				* Verify if file is allowed;
+		*/
+
+		if ( (ret_val = check_existent_file(request.html_file,request.request_type)) == -1 )
+		{
+			pthread_mutex_lock(&mutex_buffer);
+			buffer_count--;
+			pthread_mutex_unlock(&mutex_buffer);
+			not_found(request.socket_id);
+			//continue;
+		}
+		else
+		{
+			if ( request.request_type == 1 )
+			{
+				send_page(request);
+			}
+			else if ( request.request_type == 2)
+			{
+				execute_script(request);
+			}
+			pthread_mutex_lock(&mutex_buffer);
+			buffer_count--;
+			pthread_mutex_unlock(&mutex_buffer);
+
+		}
+
+
+
 	}
+
+	return NULL;
 }
 
 void catch_pipe()
