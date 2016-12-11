@@ -15,6 +15,12 @@
  * Configs into shared mem ?
  */
 
+ pthread_mutex_t mutex_buffer = PTHREAD_MUTEX_INITIALIZER;
+ pthread_mutex_t config_mutex = PTHREAD_MUTEX_INITIALIZER;
+ pthread_cond_t buffer_cond = PTHREAD_COND_INITIALIZER;
+
+
+
 int main(int argc, char ** argv)
 {
 
@@ -30,6 +36,9 @@ void init()
 {
 
 	clean = (clean_ptr) malloc(sizeof(clean_no));
+
+  counter_static = 0;
+  counter_script = 0;
 
 	running = 1;
 	clean->shm = 0;
@@ -56,6 +65,11 @@ void init()
 	else clean_up();
 	clean->shm = 1;
 
+
+  /* Inicializar o valor do semaforo a 0 */
+	sem_unlink("STATS_SEM");
+	stats_semaphore = sem_open("STATS_SEM",O_CREAT|O_EXCL, 0777,0);
+
 	/* Creating statistics process */
 
 	if ( fork() == 0 )
@@ -68,10 +82,6 @@ void init()
 		printf("Erro: Could not create Statistics Process!\n");
 		clean_up();
 	}
-
-	/* Inicializar o valor do semaforo a 0 */
-	//sem_unlink("PIPE_C");
-	//pipe_controller1 = sem_open("PIPE_C",O_CREAT|O_EXCL, 0777,0);
 
 	/* Creating listener for pipe */
 
@@ -161,7 +171,7 @@ void http_main_listener()
 				* If server is full:
 						* Send unavailable service to client
 		*/
-		if ( buffer_count == SERVER_CAPACITY - 1)
+		if ( buffer_count == SERVER_CAPACITY )
 		{
 			server_unavailable(new_conn);
 			close(new_conn);
@@ -180,8 +190,128 @@ void http_main_listener()
 		//close(new_conn);
 
 	}
-
 }
+
+void * scheduler ( )
+{
+
+	int ret_val;
+  char hora_rec[15];
+  char hora_term[15];
+	while(1)
+	{
+		/* Waits on a condition variable, in this case, buffer count */
+		pthread_mutex_lock(&mutex_buffer);
+		/*  If the condition is false:
+					* buffer_cond*
+					* Mutex is released
+					* Waits until gets notified
+		*/
+		while(buffer_count == 0 )
+		{
+			pthread_cond_wait(&buffer_cond,&mutex_buffer);
+		}
+
+		/* Mutual Exclusion
+				* Get request from buffer
+				* Process request
+				* Update buffer count
+		*/
+		new_request request;
+		request = dequeue(&buffer);
+		pthread_mutex_unlock(&mutex_buffer);
+		//printf("<%d>\n", request.request_type);
+		/* Verify:
+				* Request Type:
+		 			* 1 - Static
+					* 2 - Compressed
+				* Verify if file is allowed;
+		*/
+
+    ret_val = check_existent_file(request.html_file,request.request_type);
+    printf("DEBUG: EXISTENT FILE: %d\n",ret_val);
+
+    if ( ret_val == -1 )
+    {
+      not_found(request.socket_id);
+      pthread_mutex_lock(&mutex_buffer);
+  		buffer_count--;
+  		pthread_mutex_unlock(&mutex_buffer);
+      continue;
+
+    }
+		if ( request.request_type == 1 )
+		{
+      /* Reception time + Ending time */
+
+      time_t now;
+      time(&now);
+
+      struct tm * ct = localtime(&now);
+      display_stats->static_total_requests++;
+      display_stats->request_type = 1;
+      strcpy(display_stats->html_file,request.html_file);
+      sprintf(hora_rec,"%d:%d:%d",ct->tm_hour,ct->tm_min,ct->tm_sec);
+      strcpy(display_stats->request_time,hora_rec);
+
+      clock_t begin = clock();
+
+			send_page(request);
+
+      clock_t end = clock();
+
+      float time_spent = (float) (end - begin) / CLOCKS_PER_SEC;
+
+      printf("DEBUG: TIME SPENT %f\n", time_spent);
+      update_time(time_spent,1);
+
+
+      sprintf(hora_term,"%d:%d:%d",ct->tm_hour,ct->tm_min,ct->tm_sec);
+      strcpy(display_stats->request_end_time,hora_term);
+
+      sem_post(stats_semaphore);
+
+
+		}
+		if ( request.request_type == 2 )
+		{
+      time_t now;
+      time(&now);
+
+
+
+      struct tm * ct = localtime(&now);
+      display_stats->static_total_requests++;
+      display_stats->request_type = 1;
+      strcpy(display_stats->html_file,request.html_file);
+      sprintf(hora_rec,"%d:%d:%d",ct->tm_hour,ct->tm_min,ct->tm_sec);
+      strcpy(display_stats->request_time,hora_rec);
+
+      clock_t begin = clock();
+
+			execute_script(request);
+
+      clock_t end = clock();
+
+      float time_spent = (float) (end - begin) / CLOCKS_PER_SEC;
+
+      update_time(time_spent,2);
+      sprintf(hora_term,"%d:%d:%d",ct->tm_hour,ct->tm_min,ct->tm_sec);
+      strcpy(display_stats->request_end_time,hora_term);
+
+      sem_post(stats_semaphore);
+		}
+
+		pthread_mutex_lock(&mutex_buffer);
+		buffer_count--;
+		pthread_mutex_unlock(&mutex_buffer);
+	}
+}
+
+
+
+
+
 
 // Processes request from client
 int get_request(int socket)
@@ -205,7 +335,7 @@ int get_request(int socket)
 	// Currently only suports GET
 	if(!found_get) {
 		printf("Request from client without a GET\n");
-		exit(1);
+		return -1;
 	}
 	// If no particular page is requested then we consider htdocs/index.html
 	if(!strlen(req_buf))
@@ -246,7 +376,7 @@ void execute_script(new_request new)
 {
 	int ret_val;
 	char buff_temp[SIZE_BUF];
-	FILE * fp;
+	FILE * fp = NULL;
 
 	if ( (ret_val = decompress(new.html_file)) == -1 )
 	{
@@ -268,7 +398,7 @@ void execute_script(new_request new)
 // Send html page to client
 void send_page(new_request new)
 {
-	FILE * fp;
+	FILE * fp = NULL;
 	char buff_temp[SIZE_BUF];
 	// Searchs for page in directory htdocs
 	sprintf(buff_temp,"htdocs/%s",new.html_file);
@@ -468,7 +598,10 @@ void clean_up(int sig)
 	}
 	printf("Socket closed...");
 
+  pthread_mutex_destroy(&mutex_buffer);
+  pthread_mutex_destroy(&config_mutex);
 
+  while (wait(NULL) != -1);
 	printf("Statistics process terminated.");
 	kill(statistics_pid,SIGKILL);
 	kill(pipe_pid,SIGKILL);

@@ -19,16 +19,15 @@
 #include "ServerHttp.h"
 
 #define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
-#define FILE_SIZE (1000 * sizeof(char)) // To be checked;
+#define FILE_SIZE (2000 * sizeof(char)) // To be checked;
 
 // TODO: Handling with the siguser;
 display_stat_node * stats_shared;
-
+int global_pos = 0;
 void stats()
 {
-
+	char aux[5];
 	sleep(1);
-
 	signal(SIGUSR1,write_screen);
 	signal(SIGUSR2,reset_info);
 
@@ -88,13 +87,44 @@ void stats()
 	{
 		printf("Error: Mapping file in memory.\n");
 	}
+
 	//sleep(360);
 
 	while(running)
 	{
 		// TODO: Write information to file anytime a request is completed
 		// TODO: Synchronized with a read/write semaphore
-		 pause();
+
+		sem_wait(stats_semaphore);
+
+		sprintf(aux,"%d",stats_shared->request_type);
+		pmap[global_pos++] = aux[0];
+		pmap[global_pos++] = ' ';
+
+		for ( size_t i = 0; i < strlen(stats_shared->html_file); i++ )
+		{
+			pmap[global_pos] = stats_shared->html_file[i];
+			global_pos++;
+		}
+		pmap[global_pos++] = ' ';
+		for ( size_t i = 0; i < strlen(stats_shared->request_time); i++ )
+		{
+			pmap[global_pos] = stats_shared->request_time[i];
+			global_pos++;
+		}
+		pmap[global_pos++] = ' ';
+		for ( size_t i = 0; i < strlen(stats_shared->request_end_time); i++ )
+		{
+			pmap[global_pos] = stats_shared->request_end_time[i];
+			global_pos++;
+		}
+		pmap[global_pos++] = '\n';
+
+    // Write it now to disk
+    if (msync(pmap, FILE_SIZE, MS_SYNC) == -1)
+    {
+        perror("Could not sync the file to disk");
+    }
 	}
 	// Unmap memory file
 	if ( munmap(pmap,FILE_SIZE) == -1 )
@@ -112,7 +142,7 @@ void write_screen()
 	printf("\n\n\t\t\ttGESTOR DE ESTATISTICAS\n\n");
 	printf("\t - INFORMACAO DE ESTATICAS AGREGADS: \n");
 	printf("\t\tNúmero total de pedidos estaticos: %d\n\t\tNumero total de pedidos comprimidos: %d\n",stats_shared->static_total_requests,stats_shared->cp_totalrequests);
-	printf("\t\tTempo medio para servir um pedido estatico nao comprimido: %.2f\n\t\tTempo medio para servir um pedido estatico comprimido: %.2f\n",stats_shared->static_request_medtime, stats_shared->cp_request_medtime);
+	printf("\t\tTempo medio para servir um pedido estatico nao comprimido: %.5f\n\t\tTempo medio para servir um pedido estatico comprimido: %.5f\n",stats_shared->static_request_medtime, stats_shared->cp_request_medtime);
 
 }
 void reset_info()
@@ -127,6 +157,9 @@ void reset_info()
 	stats_shared->cp_totalrequests = 0;
 	stats_shared->static_request_medtime = 0;
 	stats_shared->cp_request_medtime = 0;
+
+	counter_script = 0;
+	counter_static = 0;
 
 	printf("\t\tReset concluído...\n\n");
 }

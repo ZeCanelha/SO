@@ -151,10 +151,11 @@ int check_existent_file( char * filename, int type )
 		sprintf(temp,"htdocs/%s",filename);
 		if ( (fp = fopen(temp,"rt")) == NULL )
 		{
-			fclose(fp);
 			return -1;
 		}
+		fclose(fp);
 	}
+	/*
 	if ( type == 2 )
 	{
 		sprintf(temp,"compressed/%s", filename);
@@ -166,82 +167,19 @@ int check_existent_file( char * filename, int type )
 		}
 		if ( (fp = fopen(temp,"rt")) == NULL )
 		{
-			fclose(fp);
 			return -1;
 		}
+		fclose(fp);
 	}
+	*/
+
 	else
 	{
 		return -1;
 	}
-	fclose(fp);
 	return 1;
 }
 
-void * scheduler ( )
-{
-
-	int ret_val;
-	while(1)
-	{
-		/* Waits on a condition variable, in this case, buffer count */
-		pthread_mutex_lock(&mutex_buffer);
-		/*  If the condition is false:
-					* buffer_cond*
-					* Mutex is released
-					* Waits until gets notified
-		*/
-		while(buffer_count == 0 )
-		{
-			pthread_cond_wait(&buffer_cond,&mutex_buffer);
-		}
-
-		/* Mutual Exclusion
-				* Get request from buffer
-				* Process request
-				* Update buffer count
-		*/
-		new_request request;
-		request = dequeue(&buffer);
-		pthread_mutex_unlock(&mutex_buffer);
-		//printf("<%d>\n", request.request_type);
-		/* Verify:
-				* Request Type:
-		 			* 1 - Static
-					* 2 - Compressed
-				* Verify if file is allowed;
-		*/
-
-		if ( (ret_val = check_existent_file(request.html_file,request.request_type)) == -1 )
-		{
-			pthread_mutex_lock(&mutex_buffer);
-			buffer_count--;
-			pthread_mutex_unlock(&mutex_buffer);
-			not_found(request.socket_id);
-			//continue;
-		}
-		else
-		{
-			if ( request.request_type == 1 )
-			{
-				send_page(request);
-			}
-			else if ( request.request_type == 2)
-			{
-				execute_script(request);
-			}
-			pthread_mutex_lock(&mutex_buffer);
-			buffer_count--;
-			pthread_mutex_unlock(&mutex_buffer);
-
-		}
-
-
-
-	}
-
-	return NULL;
-}
 
 void catch_pipe()
 {
@@ -253,4 +191,36 @@ void sig_stop()
 {
 	printf("Control+Z pressed.\n");
 	clean_up();
+}
+
+void update_time(float time , int type)
+{
+	float sum = 0;
+	float mean = 0;
+	if ( type == 1 )
+	{
+		global_static_served[counter_static] = time;
+		counter_static++;
+
+		for ( int i = 0; i < counter_static; i++ )
+		{
+			sum+= global_static_served[i];
+		}
+		mean = sum/(float)(counter_static);
+
+		printf("DEBUG: MEAN TIME %f\n\n\n",mean);
+		display_stats->static_request_medtime = mean;
+	}
+	if( type == 2 )
+	{
+		global_script_server[counter_script] = time;
+		counter_script++;
+
+		for ( int i = 0; i < counter_script; i++ )
+		{
+			sum += global_script_server[i];
+		}
+		mean = sum/(float)counter_script;
+		display_stats->cp_request_medtime = mean;
+	}
 }

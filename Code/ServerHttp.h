@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <sys/shm.h>
+#include <time.h>
 
 #include "scheduler.h"
 
@@ -34,6 +35,8 @@
 #define STAT_BUFF 100
 #define MAX_FILES_ALLOWED 5
 #define FILES_ALLOWED_SIZE 25
+#define ARRAY_SIZE 200
+
 
 // Header of HTTP reply to client
 #define	SERVER_STRING 	"Server: simpleserver/0.1.0\r\n"
@@ -47,7 +50,7 @@
 
 /* Operations for pipe comunication */
 
-sem_t * pipe_controller1;
+sem_t * stats_semaphore;
 #define SEM_NAME "pipe_control"
 #define NAMED_PIPE "configspipe"
 
@@ -91,8 +94,8 @@ typedef struct stats_node
 
 	int request_type;
 	char html_file[STAT_BUFF];
-	char request_time[STAT_BUFF];
-	char request_end_time[STAT_BUFF];
+	char request_time[MAX_BUFF];
+	char request_end_time[MAX_BUFF];
 
 }display_stat_node;
 
@@ -114,11 +117,6 @@ config_node  * configuracoes;
 
 // Threads
 
-pthread_mutex_t mutex_buffer;
-pthread_mutex_t config_mutex;
-pthread_cond_t buffer_cond;
-
-
 /* Scheduler Queue Pointer */
 
 Queue buffer;
@@ -136,6 +134,11 @@ int log_fd;
 int current_files_allowed_count;
 char *pmap;
 int buffer_count;
+
+int counter_static;
+int counter_script;
+float global_static_served[ARRAY_SIZE];
+float global_script_server[ARRAY_SIZE];
 
 /* ServerHttp functions */
 
@@ -165,6 +168,7 @@ int check_existent_file(char * , int );
 int is_permited(char *);
 void catch_pipe();
 void sig_stop();
+void update_time(float, int);
 /* Statistics functions */
 
 void stats();
@@ -172,5 +176,6 @@ void update_stats();
 void write_screen();
 void reset_info();
 int get_stat();
+void write_into_mmap();
 
 #endif
