@@ -161,6 +161,7 @@ new_request dequeue (Queue *queue)
 {
   node_ptr temp_ptr;
   new_request request;
+  request.request_type = -1;
   if (empty_queue (queue) == 0)
   {
     temp_ptr = queue->front;
@@ -169,6 +170,9 @@ new_request dequeue (Queue *queue)
     if (empty_queue (queue) == 1)
       queue->rear = NULL;
     free (temp_ptr);
-    return (request);
+    return request;
   }
+
+  return request;
+
 }

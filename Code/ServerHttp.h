@@ -182,7 +182,7 @@ void catch_pipe();
 void sig_stop();
 void update_time(float, int);
 /* Statistics functions */
-
+void sig_handler(int );
 void stats();
 void update_stats();
 void write_screen();

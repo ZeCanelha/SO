@@ -8,7 +8,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#define MAX_BUFFER 15
+#define MAX_BUFFER 50
 
 /* Request types
  * 1 - Static

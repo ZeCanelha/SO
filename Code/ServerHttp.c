@@ -32,12 +32,42 @@ int main(int argc, char ** argv)
 {
 
 	/* Creating process' and running initial configuration */
+
+  signal(SIGINT,sig_handler);
+	signal(SIGTSTP,sig_handler);
+	signal(SIGHUP,sig_handler);
+	signal(SIGQUIT,sig_handler);
+	signal(SIGILL,sig_handler);
+	signal(SIGBUS,sig_handler);
+	signal(SIGTRAP,sig_handler);
+	signal(SIGABRT,sig_handler);
+	signal(SIGSEGV,sig_handler);
+	signal(SIGSYS,sig_handler);
+	signal(SIGPIPE,sig_handler);
+	signal(SIGALRM,sig_handler);
+	signal(SIGTERM,sig_handler);
+	signal(SIGURG,sig_handler);
+	signal(SIGCONT,sig_handler);
+	signal(SIGCHLD,sig_handler);
+
+  printf("MAIN PID: %ld\n",(long)getpid());
 	init();
 	// main thread
 	http_main_listener();
+
 }
 
-
+void sig_handler(int signum)
+{
+  switch(signum)
+  {
+    case SIGINT:
+      clean_up();
+      break;
+    default:
+      return;
+    }
+}
 
 void init()
 {
@@ -109,10 +139,13 @@ void init()
 
 void http_main_listener()
 {
+
+
+
 	struct sockaddr_in client_name;
 	socklen_t client_name_len = sizeof(client_name);
 
-	signal(SIGINT,clean_up);
+	//signal(SIGINT,clean_up);
 	//signal(SIGPIPE,catch_pipe);
 	//signal(SIGTSTP,sig_stop);
 
@@ -300,7 +333,7 @@ void * scheduler ( )
 
 
 		}
-		if ( request.request_type == 2 )
+		else if ( request.request_type == 2 )
 		{
       time_t now;
       time(&now);
@@ -332,7 +365,10 @@ void * scheduler ( )
 
       sem_post(stats_semaphore);
 		}
-
+    else
+    {
+      continue;
+    }
 		pthread_mutex_lock(&mutex_buffer);
 		buffer_count--;
 		pthread_mutex_unlock(&mutex_buffer);
@@ -717,6 +753,7 @@ void pipe_listener()
 			}
 			else
 			{
+        printf("Numero de threads alterado: %d\n", new_configs.max_threads);
 	       wait_thread = 1;
          old_thread = configuracoes->max_threads;
         /* Recreate thread poll */

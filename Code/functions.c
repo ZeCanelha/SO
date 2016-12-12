@@ -167,7 +167,7 @@ int check_existent_file( char * filename, int type )
 			return -1;
 		}
 		fclose(fp);
-		printf("DEBUG::::");
+		printf("DEBUG\n");
 		return 1;
 	}
 	if ( type == 2 )
