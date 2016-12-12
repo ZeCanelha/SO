@@ -1,3 +1,11 @@
+/* SISTEMAS OPERATIVOS 2016/2017
+ *
+ * JOSÉ CANELHA 2012169312 125H
+ * RÚBEN TOMÁS 2012172347 100h
+ *
+*/
+
+
 #include "ServerHttp.h"
 
 
@@ -94,7 +102,9 @@ int decompress( char * file_name )
 	int ret_val;
 	char buffer[LINE_SIZE];
 
-	 if ( sprintf(buffer,"gunzip -c ./compressed %s > output.html",file_name) == -1 )
+	printf("DEBUGGG:<%s>\n", file_name);
+
+	 if ( sprintf(buffer,"gunzip -c ./htdocs/%s > ./htdocs/output.html",file_name) == -1 )
 	{
 		printf("Error reading compressed file.\n");
 	}
@@ -144,21 +154,27 @@ int is_permited( char * filename )
 int check_existent_file( char * filename, int type )
 {
 	FILE * fp;
-	char temp[MAX_FILES_ALLOWED+MAX_BUFF];
+	char temp[100];
 
 	if ( type == 1 )
 	{
+		printf("filename: %s\n",filename );
 		sprintf(temp,"htdocs/%s",filename);
+		printf("TEMP: %s\n",temp );
+
 		if ( (fp = fopen(temp,"rt")) == NULL )
 		{
 			return -1;
 		}
 		fclose(fp);
+		printf("DEBUG::::");
+		return 1;
 	}
-	/*
 	if ( type == 2 )
 	{
-		sprintf(temp,"compressed/%s", filename);
+
+		sprintf(temp,"htdocs/%s", filename);
+		printf("DEBUG: <%s>\n",temp);
 
 		if ( is_permited(filename) == -1 )
 		{
@@ -171,8 +187,6 @@ int check_existent_file( char * filename, int type )
 		}
 		fclose(fp);
 	}
-	*/
-
 	else
 	{
 		return -1;

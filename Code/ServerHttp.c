@@ -1,3 +1,10 @@
+/* SISTEMAS OPERATIVOS 2016/2017
+ *
+ * JOSÉ CANELHA 2012169312 125H
+ * RÚBEN TOMÁS 2012172347 100h
+ *
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,7 +46,8 @@ void init()
 
   counter_static = 0;
   counter_script = 0;
-
+  wait_thread = 0;
+  old_thread = 0;
 	running = 1;
 	clean->shm = 0;
 	clean->thread = 0;
@@ -96,18 +104,7 @@ void init()
     create_queue(&buffer);
 		buffer_count = 0;
 
-	/* Create thread_poll */
-	pthread_t scheduler_thread[configuracoes->max_threads];
-	for ( int i = 0; i < configuracoes->max_threads; i++)
-	{
-		if ( pthread_create(&scheduler_thread[i],NULL,scheduler,NULL))
-		{
-			printf("Error creating threadpool.\n");
-			clean_up();
-		}
-	}
 
-	printf("Threadpoll created\n" );
 }
 
 void http_main_listener()
@@ -118,6 +115,19 @@ void http_main_listener()
 	signal(SIGINT,clean_up);
 	//signal(SIGPIPE,catch_pipe);
 	//signal(SIGTSTP,sig_stop);
+
+  /* Create thread_pool */
+  pthread_t scheduler_thread[configuracoes->max_threads];
+  for ( int i = 0; i < configuracoes->max_threads; i++)
+  {
+    if ( pthread_create(&scheduler_thread[i],NULL,scheduler,NULL))
+    {
+      printf("Error creating threadpool.\n");
+      clean_up();
+    }
+  }
+
+  printf("Threadpoll created\n" );
 
 
 	printf("Listening for HTTP requests on server_port %d\n",configuracoes->server_port);
@@ -130,6 +140,23 @@ void http_main_listener()
 	// Serve requests
 	while (1)
 	{
+    if ( wait_thread == 1 )
+    {
+      // W8 all threads to finisih
+      for ( int k = 0; k < old_thread; k++ )
+      {
+        pthread_join(scheduler_thread[k],NULL);
+      }
+      for ( int j = 0; j < configuracoes->max_threads; j++ )
+      {
+        if ( pthread_create(&scheduler_thread[j],NULL,scheduler,NULL))
+        {
+          printf("Error creating threadpool.\n");
+          clean_up();
+        }
+      }
+      wait_thread = 0;
+    }
 		// Accept connection on socket
 		if ( (new_conn = accept(socket_conn,(struct sockaddr *)&client_name,&client_name_len)) == -1 ) {
 			printf("Error accepting connection\n");
@@ -145,13 +172,13 @@ void http_main_listener()
 			close(new_conn);
 			continue;
 		}
-
 		// Create struct to store the request
 		new_request request;
 		// Verify if request is for a page or script
 		if(!strncmp(req_buf,CGI_EXPR,strlen(CGI_EXPR)))
 		{}
-		else if(!strncmp(req_buf,"scripts/",strlen("scripts/"))){
+		else if(strstr(req_buf,".gz"))
+    {
 			request.socket_id = new_conn;
 			strcpy(request.html_file, req_buf);
 			request.request_type = 2;
@@ -228,6 +255,7 @@ void * scheduler ( )
 				* Verify if file is allowed;
 		*/
 
+    printf("REQUEST TYPE: %d\n", request.request_type);
     ret_val = check_existent_file(request.html_file,request.request_type);
     printf("DEBUG: EXISTENT FILE: %d\n",ret_val);
 
@@ -262,7 +290,6 @@ void * scheduler ( )
 
       float time_spent = (float) (end - begin) / CLOCKS_PER_SEC;
 
-      printf("DEBUG: TIME SPENT %f\n", time_spent);
       update_time(time_spent,1);
 
 
@@ -281,11 +308,13 @@ void * scheduler ( )
 
 
       struct tm * ct = localtime(&now);
-      display_stats->static_total_requests++;
+      display_stats->cp_totalrequests++;
       display_stats->request_type = 1;
       strcpy(display_stats->html_file,request.html_file);
       sprintf(hora_rec,"%d:%d:%d",ct->tm_hour,ct->tm_min,ct->tm_sec);
       strcpy(display_stats->request_time,hora_rec);
+
+
 
       clock_t begin = clock();
 
@@ -298,6 +327,8 @@ void * scheduler ( )
       update_time(time_spent,2);
       sprintf(hora_term,"%d:%d:%d",ct->tm_hour,ct->tm_min,ct->tm_sec);
       strcpy(display_stats->request_end_time,hora_term);
+
+
 
       sem_post(stats_semaphore);
 		}
@@ -387,9 +418,11 @@ void execute_script(new_request new)
 
 	send_header(new.socket_id);
 	printf("send_page: sending page output.hmtl to client\n");
+
+  fp = fopen("./htdocs/output.html","rt");
+
 	while(fgets(buff_temp,SIZE_BUF,fp))
 		send(new.socket_id,buff_temp,strlen(buff_temp),0);
-
 	close(new.socket_id);
 	return;
 }
@@ -574,6 +607,8 @@ void server_unavailable(int socket)
 void clean_up(int sig)
 {
 	printf("Server terminating..\n");
+
+
 	printf("Removing shared memory object.\n");
 	if ( clean->log_fd == 1 )
 	{
@@ -591,6 +626,14 @@ void clean_up(int sig)
 			printf("Shared memory freed.\n");
 		}
 	}
+  if ( munmap(pmap,FILE_SIZE) == -1 )
+	{
+		perror("Unmapping the memory");
+	}
+	else
+	{
+		printf("Memory unmapped.\n");
+	}
 	printf("Closing socket..\n");
 	if ( clean->socket == 1)
 	{
@@ -601,8 +644,8 @@ void clean_up(int sig)
   pthread_mutex_destroy(&mutex_buffer);
   pthread_mutex_destroy(&config_mutex);
 
-  while (wait(NULL) != -1);
 	printf("Statistics process terminated.");
+
 	kill(statistics_pid,SIGKILL);
 	kill(pipe_pid,SIGKILL);
 
@@ -624,7 +667,6 @@ void pipe_listener()
     	perror("Cannot create pipe: ");
     	exit(0);
   	}
-  	// TODO: Remove pipe
   	printf("Piped created for comunications.\n");
 
   	/* Start reading */
@@ -661,6 +703,7 @@ void pipe_listener()
 			printf("Allowed files: \n");
 			for ( int i = 0; i < new_configs.string_counter; i++ )
 			{
+        printf("DEBUG_FILES\n");
 				strcpy(configuracoes->allowed[i],new_configs.allowed[i]);
 				printf("- %s\n",configuracoes->allowed[i]);
 			}
@@ -674,7 +717,10 @@ void pipe_listener()
 			}
 			else
 			{
-				/* TODO: Wait all threads to complete their job */
+	       wait_thread = 1;
+         old_thread = configuracoes->max_threads;
+        /* Recreate thread poll */
+        configuracoes->max_threads = new_configs.max_threads;
 			}
 
 			pthread_mutex_unlock(&config_mutex);

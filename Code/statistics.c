@@ -1,3 +1,10 @@
+/* SISTEMAS OPERATIVOS 2016/2017
+ *
+ * JOSÉ CANELHA 2012169312 125H
+ * RÚBEN TOMÁS 2012172347 100h
+ *
+*/
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -19,7 +26,6 @@
 #include "ServerHttp.h"
 
 #define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
-#define FILE_SIZE (2000 * sizeof(char)) // To be checked;
 
 // TODO: Handling with the siguser;
 display_stat_node * stats_shared;
@@ -56,8 +62,8 @@ void stats()
 
 	/* Obtain file size */
 
-	size_t size;
-	size = get_stat(log_fd);
+	//size_t size;
+	//size = get_stat(log_fd);
 
 	/* Stretch the file size to the size of the log file */
 

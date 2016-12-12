@@ -1,3 +1,9 @@
+/* SISTEMAS OPERATIVOS 2016/2017
+ *
+ * JOSÉ CANELHA 2012169312 125H
+ * RÚBEN TOMÁS 2012172347 100h
+ *
+*/
 #include "scheduler.h"
 #include "ServerHttp.h"
 

@@ -1,6 +1,14 @@
+/* SISTEMAS OPERATIVOS 2016/2017
+ *
+ * JOSÉ CANELHA 2012169312 125H
+ * RÚBEN TOMÁS 2012172347 100h
+ *
+*/
+
 #ifndef SERVERHTTP_H
 #define SERVERHTTP_H
 
+#include <sys/mman.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -30,12 +38,14 @@
 #define FILENAME "..//configs/configs.txt"
 #define LOGFILE "server.log"
 #define SERVER_CAPACITY 10
-#define LINE_SIZE 50
+#define LINE_SIZE 100
 #define MAX_BUFF 15
 #define STAT_BUFF 100
 #define MAX_FILES_ALLOWED 5
 #define FILES_ALLOWED_SIZE 25
 #define ARRAY_SIZE 200
+#define FILE_SIZE (2000 * sizeof(char)) // To be checked;
+
 
 
 // Header of HTTP reply to client
@@ -134,6 +144,8 @@ int log_fd;
 int current_files_allowed_count;
 char *pmap;
 int buffer_count;
+int wait_thread;
+int old_thread;
 
 int counter_static;
 int counter_script;
