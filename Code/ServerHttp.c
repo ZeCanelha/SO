@@ -46,6 +46,8 @@ int main(int argc, char ** argv)
 	signal(SIGPIPE,sig_handler);
 	signal(SIGALRM,sig_handler);
 	signal(SIGTERM,sig_handler);
+  signal(SIGUSR1,sig_handler);
+  signal(SIGUSR2,sig_handler);
 	signal(SIGURG,sig_handler);
 	signal(SIGCONT,sig_handler);
 	signal(SIGCHLD,sig_handler);
